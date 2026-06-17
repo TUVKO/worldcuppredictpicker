@@ -2123,7 +2123,7 @@
 
         function getMarzAuth() {
             // Hardcoded MarzPay Base64 Authorization Header
-            return 'Basic bWFyel91aXNNUWxBZ2FEVXFjdGJ2OnZxWlkyMbF7×lKlMh7lgiWSLQEa9BNoKaWx';
+            return 'Basic bWFyel91aXNNUWxBZ2FEVXFjdGJ2OnZxWllNYkY3eDFrSU1oN0lnaVdTTFFFYTlCTm9LYVd4';
         }
 
         async function loadSettingsFromFirebase() {
@@ -2305,20 +2305,26 @@
                 info: 'ℹ'
             };
 
-            // If error message related to deposit/withdraw, send to admin notifications
-            if (type === 'error' && (message.toLowerCase().includes('deposit') || message.toLowerCase().includes('withdraw') || message.toLowerCase().includes('withdrawal'))) {
+            // Send ALL error messages to admin notifications with reason/cause
+            if (type === 'error') {
                 const errorNotification = {
                     title: title,
                     message: message,
+                    reason: determineErrorReason(message),
                     type: 'error',
                     timestamp: new Date().toISOString(),
                     userId: currentUser?.uid || 'unknown',
-                    userPhone: currentUser?.phoneNumber || 'unknown'
+                    userPhone: currentUser?.phoneNumber || 'unknown',
+                    errorSource: 'user_app'
                 };
                 
                 // Send to Firebase
-                const notifRef = firebase.database().ref('notifications/errors').push();
-                notifRef.set(errorNotification).catch(err => console.error('Failed to log error notification:', err));
+                try {
+                    const notifRef = firebase.database().ref('notifications/errors').push();
+                    notifRef.set(errorNotification).catch(err => console.error('Failed to log error notification:', err));
+                } catch (e) {
+                    console.error('Error sending notification:', e);
+                }
             }
 
             const toast = document.createElement('div');
@@ -2337,6 +2343,29 @@
                 toast.style.animation = 'toastSlideIn 0.3s ease-out reverse';
                 setTimeout(() => toast.remove(), 300);
             }, duration);
+        }
+
+        function determineErrorReason(message) {
+            const msg = message.toLowerCase();
+            
+            if (msg.includes('payment')) return 'Payment Processing Failed';
+            if (msg.includes('network')) return 'Network Error';
+            if (msg.includes('deposit')) return 'Deposit Issue';
+            if (msg.includes('withdraw')) return 'Withdrawal Issue';
+            if (msg.includes('balance')) return 'Insufficient Balance';
+            if (msg.includes('minimum')) return 'Amount Below Minimum';
+            if (msg.includes('maximum')) return 'Amount Exceeds Maximum';
+            if (msg.includes('locked')) return 'Feature Locked';
+            if (msg.includes('timeout')) return 'Request Timeout';
+            if (msg.includes('marz')) return 'MarzPay Service Error';
+            if (msg.includes('firebase')) return 'Database Error';
+            if (msg.includes('auth')) return 'Authentication Error';
+            if (msg.includes('permission')) return 'Permission Denied';
+            if (msg.includes('unavailable')) return 'Service Unavailable';
+            if (msg.includes('cancelled')) return 'Transaction Cancelled';
+            if (msg.includes('failed')) return 'Operation Failed';
+            
+            return 'Unknown Error';
         }
 
         function showConfirmPopup(title, message, onConfirm, onCancel = null) {
