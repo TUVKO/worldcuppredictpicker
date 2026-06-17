@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WorldCupPredict – Admin Panel</title>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+    }
+    /* ---------- LOGIN ---------- */
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+    }
+    .login-box {
+      background: #fff;
+      padding: 40px 32px;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .login-box h1 {
+      font-size: 28px;
+      font-weight: 900;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .login-box .subtitle {
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 28px;
+    }
+    .login-box .form-group { margin-bottom: 16px; }
+    .login-box label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #555;
+      margin-bottom: 6px;
+    }
+    .login-box input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: 0.3s;
+      font-family: 'Inter', sans-serif;
+    }
+    .login-box input:focus { outline: none; border-color: #667eea; }
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.3s;
+      font-family: 'Inter', sans-serif;
+    }
+    .login-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102,126,234,0.4); }
+    .login-error {
+      background: #fee2e2;
+      color: #dc2626;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .login-error.show { display: block; }
+    .register-link {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 13px;
+      color: #666;
+    }
+    .register-link a {
+      color: #667eea;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .register-link a:hover { text-decoration: underline; }
+
+    /* ---------- ADMIN LAYOUT ---------- */
+    .admin-container { display: none; }
+    .admin-container.active { display: flex; }
+
+    .sidebar {
+      width: 260px;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+      color: #fff;
+      padding: 20px;
+      position: fixed;
+      left: 0;
+      top: 0;
+      overflow-y: auto;
+      z-index: 100;
+    }
+    .sidebar-brand {
+      font-size: 20px;
+      font-weight: 900;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .sidebar-brand span { color: #667eea; }
+    .sidebar-menu { list-style: none; }
+    .sidebar-menu li { margin-bottom: 4px; }
+    .sidebar-menu a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      color: rgba(255,255,255,0.7);
+      text-decoration: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .sidebar-menu a:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .sidebar-menu a.active { background: rgba(102,126,234,0.3); color: #fff; }
+    .sidebar-menu a .icon { font-size: 18px; width: 24px; }
+    .sidebar-menu a .badge {
+      margin-left: auto;
+      background: #ef4444;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+
+    .main-content {
+      margin-left: 260px;
+      flex: 1;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .topbar {
+      background: #fff;
+      padding: 16px 24px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .topbar h1 { font-size: 22px; font-weight: 800; }
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .topbar-right .admin-name { font-weight: 600; font-size: 14px; }
+    .logout-btn {
+      padding: 8px 20px;
+      background: #ef4444;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.3s;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+    }
+    .logout-btn:hover { background: #dc2626; }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ---------- STATS ---------- */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border-left: 4px solid #667eea;
+    }
+    .stat-card .stat-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .stat-card .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      margin-top: 6px;
+    }
+    .stat-card .stat-value.green { color: #22c55e; }
+    .stat-card .stat-value.red { color: #ef4444; }
+    .stat-card .stat-value.orange { color: #f59e0b; }
+
+    /* ---------- CARDS ---------- */
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .card-header h2 { font-size: 18px; font-weight: 700; }
+
+    /* ---------- SEARCH ---------- */
+    .search-bar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .search-bar input, .search-bar select {
+      padding: 8px 14px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      transition: 0.3s;
+      background: #fff;
+    }
+    .search-bar input:focus, .search-bar select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .search-bar input { min-width: 200px; flex: 1; }
+
+    /* ---------- BUTTONS ---------- */
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.3s;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+    }
+    .btn-primary { background: #667eea; color: #fff; }
+    .btn-primary:hover { background: #5a6fd8; }
+    .btn-success { background: #22c55e; color: #fff; }
+    .btn-success:hover { background: #16a34a; }
+    .btn-danger { background: #ef4444; color: #fff; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-warning { background: #f59e0b; color: #fff; }
+    .btn-warning:hover { background: #d97706; }
+    .btn-sm { padding: 4px 10px; font-size: 11px; }
+
+    /* ---------- TABLES ---------- */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    table thead { background: #f8f9fa; }
+    table th {
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: #555;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    table td {
+      padding: 10px 16px;
+      border-bottom: 1px solid #eee;
+    }
+    table tr:hover { background: #f8f9fa; }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-active { background: #dbeafe; color: #2563eb; }
+    .badge-won { background: #d1fae5; color: #16a34a; }
+    .badge-lost { background: #fee2e2; color: #dc2626; }
+    .badge-cancelled { background: #fef3c7; color: #d97706; }
+
+    /* ---------- MODALS ---------- */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px;
+      max-width: 500px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-content h3 { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+    .modal-content .form-group { margin-bottom: 14px; }
+    .modal-content label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 4px;
+    }
+    .modal-content input, .modal-content select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      transition: 0.3s;
+    }
+    .modal-content input:focus, .modal-content select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
+    .modal-footer .btn { padding: 10px 24px; }
+
+    /* ---------- DANGER ---------- */
+    .danger-zone {
+      border: 2px solid #ef4444;
+      border-radius: 12px;
+      padding: 20px;
+      background: #fef2f2;
+    }
+    .danger-zone h3 { color: #dc2626; margin-bottom: 8px; }
+    .danger-zone p { color: #666; font-size: 13px; margin-bottom: 16px; }
+    .danger-zone .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* ---------- RESPONSIVE ---------- */
+    @media (max-width: 768px) {
+      .sidebar { width: 60px; padding: 12px; }
+      .sidebar-brand { font-size: 14px; }
+      .sidebar-brand span { display: none; }
+      .sidebar-menu a span { display: none; }
+      .sidebar-menu a .icon { font-size: 20px; }
+      .main-content { margin-left: 60px; padding: 12px; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .search-bar input { min-width: 120px; }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .topbar { flex-direction: column; gap: 12px; text-align: center; }
+    }
+
+    /* ============================================================ */
+    /* POPUP / TOAST SYSTEM */
+    /* ============================================================ */
+    .popup-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .popup-overlay.show { display: flex; }
+    .popup-box {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+      text-align: center;
+      animation: popupSlideIn 0.3s ease-out;
+    }
+    @keyframes popupSlideIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .popup-icon { font-size: 48px; margin-bottom: 16px; display: block; }
+    .popup-title { font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
+    .popup-message { font-size: 14px; color: #666; margin-bottom: 24px; line-height: 1.5; }
+    .popup-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .popup-btn { padding: 12px 28px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; min-width: 100px; }
+    .popup-btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+    .popup-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3); }
+    .popup-btn-secondary { background: #f0f0f0; color: #333; }
+    .popup-btn-secondary:hover { background: #e0e0e0; }
+    .popup-btn-danger { background: #ef4444; color: white; }
+    .popup-btn-danger:hover { background: #dc2626; transform: translateY(-2px); }
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 3000; max-width: 350px; }
+    .toast { background: white; border-radius: 12px; padding: 16px 20px; margin-bottom: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); display: flex; gap: 12px; align-items: flex-start; animation: toastSlideIn 0.3s ease-out; }
+    @keyframes toastSlideIn {
+      from { opacity: 0; transform: translateX(400px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .toast.success { border-left: 4px solid #10b981; }
+    .toast.error { border-left: 4px solid #ef4444; }
+    .toast.warning { border-left: 4px solid #f59e0b; }
+    .toast.info { border-left: 4px solid #3b82f6; }
+    .toast-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+    .toast-content { flex: 1; }
+    .toast-title { font-weight: 600; font-size: 14px; color: #1a1a1a; margin-bottom: 2px; }
+    .toast-message { font-size: 13px; color: #666; }
+  </style>
+</head>
+<body>
+
+<!-- ==================== LOGIN PAGE ==================== -->
+<div id="loginPage">
+  <div class="login-container">
+    <div class="login-box">
+      <h1>WorldCupPredict</h1>
+      <p class="subtitle">Admin Panel</p>
+      <div id="loginError" class="login-error">Invalid credentials</div>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="adminUsername" placeholder="Enter username">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="adminPassword" placeholder="Enter password">
+      </div>
+      <button class="login-btn" onclick="handleLogin()">Login</button>
+      <div class="register-link">
+        Don't have access? <a onclick="showRegister()">Register</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== REGISTER PAGE ==================== -->
+<div id="registerPage" style="display:none;">
+  <div class="login-container">
+    <div class="login-box">
+      <h1>Create Admin</h1>
+      <p class="subtitle">Register new admin account</p>
+      <div id="registerError" class="login-error">Please fill all fields</div>
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="regName" placeholder="Enter full name">
+      </div>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="regUsername" placeholder="Choose username">
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="text" id="regPhone" placeholder="Enter phone number">
+      </div>
+      <div class="form-group">
+        <label>Password (min 6 chars)</label>
+        <input type="password" id="regPassword" placeholder="Create password">
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <input type="password" id="regConfirm" placeholder="Confirm password">
+      </div>
+      <button class="login-btn" onclick="handleRegister()">Register</button>
+      <div class="register-link">
+        Already have access? <a onclick="showLogin()">Login</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ADMIN PANEL ==================== -->
+<div id="adminPanel" class="admin-container">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-brand">World<span>Cup</span>Predict</div>
+    <ul class="sidebar-menu">
+      <li><a onclick="openPage('dashboard')" class="active" data-page="dashboard"><span class="icon">📊</span><span>Dashboard</span></a></li>
+      <li><a onclick="openPage('users')" data-page="users"><span class="icon">👥</span><span>Users</span><span class="badge" id="userBadge">0</span></a></li>
+      <li><a onclick="openPage('predictions')" data-page="predictions"><span class="icon">⚽</span><span>Predictions</span><span class="badge" id="predBadge">0</span></a></li>
+      <li><a onclick="openPage('teams')" data-page="teams"><span class="icon">🏆</span><span>Teams &amp; Odds</span></a></li>
+      <li><a onclick="openPage('transactions')" data-page="transactions"><span class="icon">💰</span><span>Transactions</span></a></li>
+      <li><a onclick="openPage('referrals')" data-page="referrals"><span class="icon">🔗</span><span>Referrals</span></a></li>
+      <li><a onclick="openPage('settings')" data-page="settings"><span class="icon">⚙️</span><span>Settings</span></a></li>
+      <li><a onclick="openPage('danger')" data-page="danger"><span class="icon">⚠️</span><span>Danger Zone</span></a></li>
+      <li style="margin-top:20px;"><a onclick="handleLogout()" style="color:#ef4444;"><span class="icon">🚪</span><span>Logout</span></a></li>
+    </ul>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <h1 id="pageTitle">Dashboard</h1>
+      <div class="topbar-right">
+        <span class="admin-name" id="adminNameDisplay">Admin</span>
+        <button class="logout-btn" onclick="handleLogout()">Logout</button>
+      </div>
+    </div>
+
+    <!-- ============================ DASHBOARD ============================ -->
+    <div id="dashboardPage" class="page active">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Total Users</div><div class="stat-value" id="totalUsers">0</div></div>
+        <div class="stat-card"><div class="stat-label">Total Predictions</div><div class="stat-value" id="totalPredictions">0</div></div>
+        <div class="stat-card"><div class="stat-label">Active Predictions</div><div class="stat-value orange" id="activePredictions">0</div></div>
+        <div class="stat-card"><div class="stat-label">Total Stakes</div><div class="stat-value" id="totalStakes">UGX 0</div></div>
+        <div class="stat-card"><div class="stat-label">Total Winnings Paid</div><div class="stat-value green" id="totalWinnings">UGX 0</div></div>
+        <div class="stat-card"><div class="stat-label">Won Predictions</div><div class="stat-value green" id="wonPredictions">0</div></div>
+        <div class="stat-card"><div class="stat-label">Lost Predictions</div><div class="stat-value red" id="lostPredictions">0</div></div>
+        <div class="stat-card"><div class="stat-label">Cancelled</div><div class="stat-value orange" id="cancelledPredictions">0</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h2>Recent Activity</h2></div>
+        <div id="activityLog"><div class="activity-item" style="padding:10px 0;border-bottom:1px solid #f0f0f0;">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- ============================ USERS ============================ -->
+    <div id="usersPage" class="page">
+      <div class="card">
+        <div class="card-header">
+          <h2>User Management</h2>
+          <button class="btn btn-primary" onclick="openUserModal()">+ Add User</button>
+        </div>
+        <div class="search-bar">
+          <input type="text" id="userSearch" placeholder="Search by name, phone, email..." onkeyup="renderUsers()">
+          <button class="btn btn-primary" onclick="renderUsers()">🔄 Refresh</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Balance</th><th>Predictions</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="usersTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================ PREDICTIONS ============================ -->
+    <div id="predictionsPage" class="page">
+      <div class="card">
+        <div class="card-header">
+          <h2>Prediction Management</h2>
+          <button class="btn btn-success" onclick="openWinnerModal()">🏆 Announce Winner</button>
+        </div>
+        <div class="search-bar">
+          <input type="text" id="predSearch" placeholder="Search by user or team..." onkeyup="renderPredictions()">
+          <select id="predStatus" onchange="renderPredictions()">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="won">Won</option>
+            <option value="lost">Lost</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>User</th><th>Team</th><th>Stake</th><th>Odds</th><th>Potential Win</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="predictionsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================ TEAMS & ODDS ============================ -->
+    <div id="teamsPage" class="page">
+      <div class="card">
+        <div class="card-header">
+          <h2>Teams &amp; Odds Management</h2>
+          <button class="btn btn-primary" onclick="openTeamModal()">+ Add Team</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>Team</th><th>Flag</th><th>Odds</th><th>Actions</th></tr></thead>
+            <tbody id="teamsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================ TRANSACTIONS ============================ -->
+    <div id="transactionsPage" class="page">
+      <div class="card">
+        <div class="card-header"><h2>Transaction Management</h2></div>
+        <div class="search-bar">
+          <select id="txType" onchange="renderTransactions()">
+            <option value="">All Types</option>
+            <option value="deposit">Deposit</option>
+            <option value="stake">Stake</option>
+            <option value="winnings">Winnings</option>
+            <option value="withdrawal">Withdrawal</option>
+            <option value="bonus">Bonus</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>User</th><th>Type</th><th>Amount</th><th>Date</th><th>Description</th><th>Status</th></tr></thead>
+            <tbody id="transactionsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================ REFERRALS ============================ -->
+    <div id="referralsPage" class="page">
+      <div class="card">
+        <div class="card-header"><h2>Referral Management</h2></div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>User</th><th>Referral Code</th><th>Total Referrals</th><th>Referral Earnings</th></tr></thead>
+            <tbody id="referralsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================ SETTINGS ============================ -->
+    <div id="settingsPage" class="page">
+      <div class="card">
+        <h2>Platform Settings</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+          <div class="form-group"><label>Min Stake (UGX)</label><input type="number" id="minStake" value="6000"></div>
+          <div class="form-group"><label>Max Stake (UGX)</label><input type="number" id="maxStake" value="5000000"></div>
+          <div class="form-group"><label>Max Payout (UGX)</label><input type="number" id="maxPayout" value="100000000"></div>
+          <div class="form-group"><label>Tax on Winnings (%)</label><input type="number" id="taxPercent" value="3" min="0" max="100" step="0.1"></div>
+          <div class="form-group"><label>Referral Commission (%)</label><input type="number" id="referralPercent" value="6" min="0" max="100" step="0.1"></div>
+          <div class="form-group"><label>Welcome Bonus (UGX)</label><input type="number" id="welcomeBonus" value="1000"></div>
+          <div class="form-group"><label>Support Email</label><input type="email" id="supportEmail" placeholder="support@example.com" value="support@worldcuppredict.app"></div>
+          <div class="form-group"><label>WhatsApp Support Link</label><input type="text" id="whatsappLink" placeholder="https://wa.me/1234567890" value=""></div>
+        </div>
+
+        <!-- ==================== MARZPAY SETTINGS ==================== -->
+        <h2 style="margin-top:32px;">MarzPay Settings</h2>
+        <div style="display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px;">
+          <div class="form-group">
+            <label>MarzPay API Key (Base64 Auth Header)</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="password" id="marzApiKey" placeholder="Paste your Base64 Authorization header from MarzPay" style="flex:1;padding:12px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;font-family:'Inter',sans-serif;">
+              <button type="button" onclick="toggleMarzKeyVisibility()" style="padding:12px 16px;background:#667eea;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;">👁️ Show</button>
+            </div>
+            <small style="display:block;margin-top:8px;opacity:0.7;">Get this from your MarzPay dashboard. It's the Base64 encoded value (starts with 'Basic ...' or just the encoded string)</small>
+          </div>
+          <div class="form-group">
+            <label>Deposit Fee (%)</label>
+            <input type="number" id="depositFeePercent" value="2" min="0" max="100" step="0.1" style="width:100%;padding:12px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;">
+            <small style="display:block;margin-top:8px;opacity:0.7;">Fee charged on top of deposit amount (added in background)</small>
+          </div>
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="withdrawManual" style="width:18px;height:18px;cursor:pointer;"> Manual Withdrawal Approval
+            </label>
+            <small style="display:block;margin-top:8px;opacity:0.7;">If checked: withdrawals require admin approval. If unchecked: instant withdrawals via MarzPay</small>
+          </div>
+          <div class="form-group">
+            <label>Withdrawal Fee (%)</label>
+            <input type="number" id="withdrawFeePercent" value="1" min="0" max="100" step="0.1" style="width:100%;padding:12px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;">
+            <small style="display:block;margin-top:8px;opacity:0.7;">Fee deducted from withdrawal amount</small>
+          </div>
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="withdrawLocked" style="width:18px;height:18px;cursor:pointer;"> Lock Withdrawals
+            </label>
+            <small style="display:block;margin-top:8px;opacity:0.7;">If checked: all withdrawals are disabled globally</small>
+          </div>
+        </div>
+
+        <div style="margin-top:16px;">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+            <input type="checkbox" id="bettingOpen" checked> Betting is Open
+          </label>
+        </div>
+        <button class="btn btn-primary" onclick="saveSettings()" style="margin-top:16px;">Save Settings</button>
+      </div>
+    </div>
+
+    <!-- ============================ DANGER ZONE ============================ -->
+    <div id="dangerPage" class="page">
+      <div class="danger-zone">
+        <h3>⚠️ Danger Zone</h3>
+        <p>These actions cannot be undone. Proceed with extreme caution.</p>
+        <div class="btn-group">
+          <button class="btn btn-danger" onclick="confirmDelete('users')">Delete All Users</button>
+          <button class="btn btn-danger" onclick="confirmDelete('predictions')">Delete All Predictions</button>
+          <button class="btn btn-danger" onclick="confirmDelete('transactions')">Delete All Transactions</button>
+          <button class="btn btn-danger" onclick="resetAll()" style="background:#8b0000;">Reset All Data</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== MODALS ==================== -->
+
+<!-- USER MODAL -->
+<div id="userModal" class="modal">
+  <div class="modal-content">
+    <h3>User Details</h3>
+    <div class="form-group"><label>Name</label><input type="text" id="modalUserName"></div>
+    <div class="form-group"><label>Phone</label><input type="text" id="modalUserPhone"></div>
+    <div class="form-group"><label>Email</label><input type="email" id="modalUserEmail"></div>
+    <div class="form-group"><label>Balance (UGX)</label><input type="number" id="modalUserBalance"></div>
+    <div class="form-group">
+      <label>Action</label>
+      <select id="userAction">
+        <option value="view">View Profile</option>
+        <option value="credit">Credit Balance</option>
+        <option value="debit">Debit Balance</option>
+        <option value="lock">Lock User</option>
+        <option value="unlock">Unlock User</option>
+        <option value="delete">Delete User</option>
+      </select>
+    </div>
+    <div class="form-group" id="amountGroup" style="display:none;">
+      <label>Amount (UGX)</label>
+      <input type="number" id="modalAmount">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="performUserAction()">Confirm</button>
+      <button class="btn" onclick="closeModal('userModal')" style="background:#ddd;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEAM MODAL -->
+<div id="teamModal" class="modal">
+  <div class="modal-content">
+    <h3>Team Details</h3>
+    <div class="form-group"><label>Team Name</label><input type="text" id="modalTeamName"></div>
+    <div class="form-group"><label>Flag Emoji</label><input type="text" id="modalTeamFlag" maxlength="2"></div>
+    <div class="form-group"><label>Odds</label><input type="number" id="modalTeamOdds" step="0.1"></div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="saveTeam()">Save</button>
+      <button class="btn" onclick="closeModal('teamModal')" style="background:#ddd;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- WINNER MODAL -->
+<div id="winnerModal" class="modal">
+  <div class="modal-content">
+    <h3>🏆 Announce World Cup Winner</h3>
+    <p style="color:#666;margin-bottom:16px;">Select the team that won the World Cup. All users who predicted this team will be paid automatically.</p>
+    <div class="form-group">
+      <label>Winning Team</label>
+      <select id="winnerTeamSelect"></select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-success" onclick="confirmWinner()">✅ Confirm &amp; Pay Winners</button>
+      <button class="btn" onclick="closeModal('winnerModal')" style="background:#ddd;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== JAVASCRIPT ==================== -->
+<script>
+  // ============================================================
+  // FIREBASE CONFIGURATION
+  // ============================================================
+  const firebaseConfig = {
+      apiKey: "AIzaSyDjeiATGP5CKRIB8GZAA9-Iitevst8LGxs",
+      authDomain: "worldcuppredict-6a172.firebaseapp.com",
+      databaseURL: "https://worldcuppredict-6a172-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "worldcuppredict-6a172",
+      storageBucket: "worldcuppredict-6a172.firebasestorage.app",
+      messagingSenderId: "448681472329",
+      appId: "1:448681472329:web:9835b32ce8ec398ec46a98"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const database = firebase.database();
+
+  // Database helper functions
+  const DB = {
+      get: (path) => database.ref(path).once('value').then(s => s.val()),
+      set: (path, data) => database.ref(path).set(data),
+      update: (path, data) => database.ref(path).update(data),
+      push: (path, data) => {
+          const ref = database.ref(path).push();
+          return ref.set(data).then(() => ref.key);
+      },
+      remove: (path) => database.ref(path).remove(),
+      generateId: () => database.ref().push().key
+  };
+
+  // ============================================================
+  // DATA – 48 World Cup Teams with default odds
+  // ============================================================
+  const DEFAULT_TEAMS = [
+    { name: 'Argentina', flag: '🇦🇷', odds: 6.0 },
+    { name: 'Australia', flag: '🇦🇺', odds: 50.0 },
+    { name: 'Austria', flag: '🇦🇹', odds: 45.0 },
+    { name: 'Belgium', flag: '🇧🇪', odds: 35.0 },
+    { name: 'Bosnia', flag: '🇧🇦', odds: 100.0 },
+    { name: 'Brazil', flag: '🇧🇷', odds: 4.0 },
+    { name: 'Canada', flag: '🇨🇦', odds: 250.0 },
+    { name: 'Cape Verde', flag: '🇨🇻', odds: 300.0 },
+    { name: 'Chile', flag: '🇨🇱', odds: 200.0 },
+    { name: 'Congo DR', flag: '🇨🇩', odds: 300.0 },
+    { name: 'Croatia', flag: '🇭🇷', odds: 25.0 },
+    { name: 'Czechia', flag: '🇨🇿', odds: 80.0 },
+    { name: "Côte d'Ivoire", flag: '🇨🇮', odds: 60.0 },
+    { name: 'Ecuador', flag: '🇪🇨', odds: 150.0 },
+    { name: 'Egypt', flag: '🇪🇬', odds: 100.0 },
+    { name: 'England', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds: 7.0 },
+    { name: 'France', flag: '🇫🇷', odds: 5.0 },
+    { name: 'Germany', flag: '🇩🇪', odds: 8.0 },
+    { name: 'Ghana', flag: '🇬🇭', odds: 120.0 },
+    { name: 'Greece', flag: '🇬🇷', odds: 300.0 },
+    { name: 'Iran', flag: '🇮🇷', odds: 200.0 },
+    { name: 'Iraq', flag: '🇮🇶', odds: 250.0 },
+    { name: 'Japan', flag: '🇯🇵', odds: 40.0 },
+    { name: 'Jordan', flag: '🇯🇴', odds: 300.0 },
+    { name: 'Mexico', flag: '🇲🇽', odds: 30.0 },
+    { name: 'Morocco', flag: '🇲🇦', odds: 15.0 },
+    { name: 'Netherlands', flag: '🇳🇱', odds: 15.0 },
+    { name: 'New Zealand', flag: '🇳🇿', odds: 300.0 },
+    { name: 'Norway', flag: '🇳🇴', odds: 200.0 },
+    { name: 'Peru', flag: '🇵🇪', odds: 100.0 },
+    { name: 'Portugal', flag: '🇵🇹', odds: 12.0 },
+    { name: 'Qatar', flag: '🇶🇦', odds: 150.0 },
+    { name: 'Saudi Arabia', flag: '🇸🇦', odds: 300.0 },
+    { name: 'Senegal', flag: '🇸🇳', odds: 70.0 },
+    { name: 'Slovakia', flag: '🇸🇰', odds: 300.0 },
+    { name: 'South Africa', flag: '🇿🇦', odds: 90.0 },
+    { name: 'South Korea', flag: '🇰🇷', odds: 50.0 },
+    { name: 'Spain', flag: '🇪🇸', odds: 9.0 },
+    { name: 'Sweden', flag: '🇸🇪', odds: 20.0 },
+    { name: 'Switzerland', flag: '🇨🇭', odds: 22.0 },
+    { name: 'Tunisia', flag: '🇹🇳', odds: 150.0 },
+    { name: 'Turkey', flag: '🇹🇷', odds: 35.0 },
+    { name: 'United States', flag: '🇺🇸', odds: 40.0 },
+    { name: 'Uruguay', flag: '🇺🇾', odds: 18.0 },
+    { name: 'Uzbekistan', flag: '🇺🇿', odds: 200.0 }
+  ];
+
+  // ============================================================
+  // STATE
+  // ============================================================
+  let currentAdmin = null;
+  let allUsers = {};
+  let allPredictions = {};
+  let allTransactions = {};
+  let allTeams = [];
+  let allAdmins = {};
+
+  // ============================================================
+  // ADMIN SESSION PERSISTENCE
+  // ============================================================
+  function saveAdminSessionToStorage(adminData) {
+    // Save to Firebase instead of localStorage
+    currentAdmin = adminData;
+  }
+
+  function restoreAdminSessionFromStorage() {
+    // Session restored from Firebase, not localStorage
+    return currentAdmin != null;
+  }
+
+  function clearAdminSessionFromStorage() {
+    // Clear from memory (Firebase auth handles the actual session)
+    currentAdmin = null;
+  }
+
+  // ============================================================
+  // POPUP / TOAST SYSTEM
+  // ============================================================
+  function showPopup(title, message, icon = '✓', type = 'success', buttons = null) {
+    const overlay = document.getElementById('popupOverlay');
+    document.getElementById('popupIcon').textContent = icon;
+    document.getElementById('popupTitle').textContent = title;
+    document.getElementById('popupMessage').textContent = message;
+    
+    const buttonsContainer = document.getElementById('popupButtons');
+    if (buttons) {
+      buttonsContainer.innerHTML = buttons;
+    } else {
+      buttonsContainer.innerHTML = '<button class="popup-btn popup-btn-primary" onclick="closePopup()">OK</button>';
+    }
+    
+    overlay.classList.add('show');
+  }
+
+  function closePopup() {
+    document.getElementById('popupOverlay').classList.remove('show');
+  }
+
+  function showToast(title, message, type = 'success', duration = 4000) {
+    const container = document.getElementById('toastContainer');
+    const icons = {
+      success: '✓',
+      error: '✕',
+      warning: '⚠',
+      info: 'ℹ'
+    };
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+      <span class="toast-icon">${icons[type]}</span>
+      <div class="toast-content">
+        <div class="toast-title">${title}</div>
+        <div class="toast-message">${message}</div>
+      </div>
+    `;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.style.animation = 'toastSlideIn 0.3s ease-out reverse';
+      setTimeout(() => toast.remove(), 300);
+    }, duration);
+  }
+
+  // ============================================================
+  // DATA LOADING
+  // ============================================================
+  function loadAllData() {
+    return Promise.all([
+      DB.get('users'),
+      DB.get('predictions'),
+      DB.get('transactions'),
+      DB.get('teams'),
+      DB.get('admins'),
+      DB.get('settings')
+    ]).then(([users, predictions, transactions, teams, admins, settings]) => {
+      allUsers = users || {};
+      allPredictions = predictions || {};
+      allTransactions = transactions || {};
+      allTeams = teams || DEFAULT_TEAMS;
+      allAdmins = admins || {};
+      
+      // Load settings and populate form
+      if (settings) {
+        populateSettingsForm(settings);
+      }
+      
+      // Save teams if not exists
+      if (!teams) {
+        DB.set('teams', DEFAULT_TEAMS);
+      }
+      renderAll();
+    }).catch(() => {
+      renderAll();
+    });
+  }
+
+  function populateSettingsForm(settings) {
+    if (settings.minStake) document.getElementById('minStake').value = settings.minStake;
+    if (settings.maxStake) document.getElementById('maxStake').value = settings.maxStake;
+    if (settings.maxPayout) document.getElementById('maxPayout').value = settings.maxPayout;
+    if (settings.taxPercent) document.getElementById('taxPercent').value = settings.taxPercent;
+    if (settings.referralPercent) document.getElementById('referralPercent').value = settings.referralPercent;
+    if (settings.welcomeBonus) document.getElementById('welcomeBonus').value = settings.welcomeBonus;
+    if (settings.supportEmail) document.getElementById('supportEmail').value = settings.supportEmail;
+    if (settings.whatsappLink) document.getElementById('whatsappLink').value = settings.whatsappLink;
+    if (settings.marzApiKey) document.getElementById('marzApiKey').value = settings.marzApiKey;
+    if (settings.depositFeePercent) document.getElementById('depositFeePercent').value = settings.depositFeePercent;
+    if (settings.withdrawManual !== undefined) document.getElementById('withdrawManual').checked = settings.withdrawManual;
+    if (settings.withdrawFeePercent) document.getElementById('withdrawFeePercent').value = settings.withdrawFeePercent;
+    if (settings.withdrawLocked !== undefined) document.getElementById('withdrawLocked').checked = settings.withdrawLocked;
+    if (settings.bettingOpen !== undefined) document.getElementById('bettingOpen').checked = settings.bettingOpen;
+  }
+
+  // ============================================================
+  // AUTH
+  // ============================================================
+  function handleLogin() {
+    const u = document.getElementById('adminUsername').value.trim();
+    const p = document.getElementById('adminPassword').value.trim();
+    const err = document.getElementById('loginError');
+    if (!u || !p) { err.textContent = 'Please fill all fields'; err.classList.add('show'); return; }
+    
+    DB.get('admins').then(admins => {
+      if (!admins) {
+        err.textContent = 'No admin accounts found';
+        err.classList.add('show');
+        return;
+      }
+      const adminList = Object.values(admins);
+      const found = adminList.find(a => a.username === u && a.password === p);
+      if (!found) { err.textContent = 'Invalid credentials'; err.classList.add('show'); return; }
+      err.classList.remove('show');
+      currentAdmin = found;
+      saveAdminSessionToStorage(found);
+      showAdminPanel();
+    }).catch(() => {
+      err.textContent = 'Error connecting to database';
+      err.classList.add('show');
+    });
+  }
+
+  function handleRegister() {
+    const name = document.getElementById('regName').value.trim();
+    const user = document.getElementById('regUsername').value.trim();
+    const phone = document.getElementById('regPhone').value.trim();
+    const pass = document.getElementById('regPassword').value;
+    const confirm = document.getElementById('regConfirm').value;
+    const err = document.getElementById('registerError');
+    if (!name || !user || !phone || !pass || !confirm) { err.textContent = 'All fields required'; err.classList.add('show'); return; }
+    if (pass.length < 6) { err.textContent = 'Password min 6 characters'; err.classList.add('show'); return; }
+    if (pass !== confirm) { err.textContent = 'Passwords do not match'; err.classList.add('show'); return; }
+    
+    DB.get('admins').then(admins => {
+      const adminList = admins ? Object.values(admins) : [];
+      if (adminList.find(a => a.username === user)) { 
+        err.textContent = 'Username already taken'; 
+        err.classList.add('show'); 
+        return; 
+      }
+      
+      const newAdmin = { username: user, password: pass, name: name, phone: phone };
+      currentAdmin = newAdmin;
+      saveAdminSessionToStorage(newAdmin);
+      const newId = DB.generateId();
+      return DB.set('admins/' + newId, newAdmin);
+    }).then(() => {
+      err.classList.remove('show');
+      document.getElementById('regName').value = '';
+      document.getElementById('regUsername').value = '';
+      document.getElementById('regPhone').value = '';
+      document.getElementById('regPassword').value = '';
+      document.getElementById('regConfirm').value = '';
+      showAdminPanel();
+    }).catch(error => {
+      err.textContent = error.message;
+      err.classList.add('show');
+    });
+  }
+
+  function showRegister() {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('registerPage').style.display = 'block';
+  }
+
+  function checkAdminSession() {
+    if (restoreAdminSessionFromStorage()) {
+      showAdminPanel();
+    } else {
+      document.getElementById('loginPage').style.display = 'block';
+    }
+  }
+
+  function showLogin() {
+    document.getElementById('loginPage').style.display = 'block';
+    document.getElementById('registerPage').style.display = 'none';
+  }
+
+  function handleLogout() {
+    if (!confirm('Logout?')) return;
+    clearAdminSessionFromStorage();
+    document.getElementById('adminPanel').classList.remove('active');
+    document.getElementById('loginPage').style.display = 'block';
+  }
+
+  function showAdminPanel() {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('registerPage').style.display = 'none';
+    document.getElementById('adminPanel').classList.add('active');
+    document.getElementById('adminNameDisplay').textContent = currentAdmin?.name || 'Admin';
+    loadAllData();
+  }
+
+  // ============================================================
+  // PAGE NAVIGATION
+  // ============================================================
+  function openPage(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(page + 'Page').classList.add('active');
+    document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
+    document.querySelector(`.sidebar-menu a[data-page="${page}"]`)?.classList.add('active');
+    const titles = { dashboard:'Dashboard', users:'Users', predictions:'Predictions', teams:'Teams & Odds', transactions:'Transactions', referrals:'Referrals', settings:'Settings', danger:'Danger Zone' };
+    document.getElementById('pageTitle').textContent = titles[page] || 'Dashboard';
+    if (page === 'teams') renderTeams();
+    if (page === 'predictions') renderPredictions();
+    if (page === 'transactions') renderTransactions();
+    if (page === 'referrals') renderReferrals();
+    if (page === 'users') renderUsers();
+    if (page === 'dashboard') updateDashboard();
+  }
+
+  // ============================================================
+  // RENDER ALL
+  // ============================================================
+  function renderAll() {
+    updateDashboard();
+    renderUsers();
+    renderPredictions();
+    renderTeams();
+    renderTransactions();
+    renderReferrals();
+    populateWinnerSelect();
+  }
+
+  // ============================================================
+  // DASHBOARD
+  // ============================================================
+  function updateDashboard() {
+    const userList = Object.values(allUsers);
+    const predList = Object.values(allPredictions);
+    const txList = Object.values(allTransactions);
+    
+    document.getElementById('totalUsers').textContent = userList.length;
+    document.getElementById('totalPredictions').textContent = predList.length;
+    document.getElementById('activePredictions').textContent = predList.filter(p => p.status === 'active').length;
+    document.getElementById('totalStakes').textContent = 'UGX ' + predList.reduce((s, p) => s + (p.stake || 0), 0).toLocaleString();
+    const won = predList.filter(p => p.status === 'won');
+    document.getElementById('wonPredictions').textContent = won.length;
+    document.getElementById('totalWinnings').textContent = 'UGX ' + won.reduce((s, p) => s + ((p.stake || 0) * (p.odds || 1)), 0).toLocaleString();
+    document.getElementById('lostPredictions').textContent = predList.filter(p => p.status === 'lost').length;
+    document.getElementById('cancelledPredictions').textContent = predList.filter(p => p.status === 'cancelled').length;
+    document.getElementById('userBadge').textContent = userList.length;
+    document.getElementById('predBadge').textContent = predList.filter(p => p.status === 'active').length;
+    
+    const recent = txList.slice(-5).reverse();
+    const log = document.getElementById('activityLog');
+    if (!recent.length) log.innerHTML = '<div style="padding:10px 0;border-bottom:1px solid #f0f0f0;">No recent activity</div>';
+    else log.innerHTML = recent.map(t => `
+      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:13px;">
+        <div><strong>${t.userName || 'Unknown'}</strong> - ${t.type.toUpperCase()}</div>
+        <div>UGX ${(t.amount || 0).toLocaleString()} <span style="color:#999;font-size:12px;">${new Date(t.date).toLocaleString()}</span></div>
+      </div>
+    `).join('');
+  }
+
+  // ============================================================
+  // USERS
+  // ============================================================
+  function renderUsers() {
+    const search = document.getElementById('userSearch')?.value?.toLowerCase() || '';
+    const tbody = document.getElementById('usersTableBody');
+    const userList = Object.values(allUsers);
+    const filtered = userList.filter(u =>
+      (u.name || '').toLowerCase().includes(search) ||
+      (u.phone || '').includes(search) ||
+      (u.email || '').toLowerCase().includes(search)
+    );
+    if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:#888;">No users found</td></tr>'; return; }
+    
+    const userIds = {};
+    Object.entries(allUsers).forEach(([key, value]) => {
+      userIds[value.phone] = key;
+    });
+    
+    tbody.innerHTML = filtered.map(u => {
+      const uid = userIds[u.phone] || '';
+      const preds = u.predictions ? Object.values(u.predictions).length : 0;
+      return `
+        <tr>
+          <td><strong>${u.name || '—'}</strong></td>
+          <td>${u.phone || '—'}</td>
+          <td>${u.email || '—'}</td>
+          <td>UGX ${(u.balance || 0).toLocaleString()}</td>
+          <td>${preds}</td>
+          <td><span class="badge ${u.locked ? 'badge-lost' : 'badge-active'}">${u.locked ? '🔒 Locked' : '✅ Active'}</span></td>
+          <td>
+            <button class="btn btn-primary btn-sm" onclick="openUserModal('${uid}')">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteUser('${uid}')">Delete</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function openUserModal(id) {
+    const user = allUsers[id];
+    if (user) {
+      document.getElementById('modalUserName').value = user.name || '';
+      document.getElementById('modalUserPhone').value = user.phone || '';
+      document.getElementById('modalUserEmail').value = user.email || '';
+      document.getElementById('modalUserBalance').value = user.balance || 0;
+    } else {
+      document.getElementById('modalUserName').value = '';
+      document.getElementById('modalUserPhone').value = '';
+      document.getElementById('modalUserEmail').value = '';
+      document.getElementById('modalUserBalance').value = '';
+    }
+    document.getElementById('userModal').dataset.userId = id || '';
+    document.getElementById('userModal').classList.add('active');
+  }
+
+  document.getElementById('userAction').addEventListener('change', function() {
+    document.getElementById('amountGroup').style.display = (this.value === 'credit' || this.value === 'debit') ? 'block' : 'none';
+  });
+
+  function performUserAction() {
+    const id = document.getElementById('userModal').dataset.userId;
+    const user = allUsers[id];
+    const action = document.getElementById('userAction').value;
+    const amount = parseInt(document.getElementById('modalAmount').value) || 0;
+    
+    if (!user && action !== 'delete') { showToast('Error', 'User not found', 'error'); return; }
+    
+    if (action === 'delete') {
+      if (!confirm('Delete this user?')) return;
+      delete allUsers[id];
+      DB.set('users/' + id, null).then(() => {
+        loadAllData();
+        closeModal('userModal');
+      });
+      return;
+    }
+    
+    if (action === 'credit') {
+      if (amount <= 0) { showToast('Error', 'Enter valid amount', 'error'); return; }
+      user.balance = (user.balance || 0) + amount;
+      const txId = DB.generateId();
+      const tx = { type: 'deposit', userName: user.name, amount, description: 'Admin credit', date: new Date().toISOString() };
+      allTransactions[txId] = tx;
+      Promise.all([
+        DB.set('users/' + id, user),
+        DB.set('transactions/' + txId, tx)
+      ]).then(() => {
+        loadAllData();
+        closeModal('userModal');
+        showToast('Success', 'Credited UGX ' + amount.toLocaleString(), 'success');
+      });
+      return;
+    }
+    
+    if (action === 'debit') {
+      if (amount <= 0) { showToast('Error', 'Enter valid amount', 'error'); return; }
+      if (user.balance < amount) { showToast('Error', 'Insufficient balance', 'error'); return; }
+      user.balance -= amount;
+      const txId = DB.generateId();
+      const tx = { type: 'withdrawal', userName: user.name, amount: -amount, description: 'Admin debit', date: new Date().toISOString() };
+      allTransactions[txId] = tx;
+      Promise.all([
+        DB.set('users/' + id, user),
+        DB.set('transactions/' + txId, tx)
+      ]).then(() => {
+        loadAllData();
+        closeModal('userModal');
+        showToast('Success', 'Debited UGX ' + amount.toLocaleString(), 'success');
+      });
+      return;
+    }
+    
+    if (action === 'lock') { user.locked = true; DB.set('users/' + id, user).then(() => { loadAllData(); closeModal('userModal'); showToast('Success', 'User locked', 'success'); }); return; }
+    if (action === 'unlock') { user.locked = false; DB.set('users/' + id, user).then(() => { loadAllData(); closeModal('userModal'); showToast('Success', 'User unlocked', 'success'); }); return; }
+    
+    closeModal('userModal');
+    showToast('Info', 'User viewed', 'info');
+  }
+
+  function deleteUser(id) {
+    if (!confirm('Delete this user?')) return;
+    delete allUsers[id];
+    DB.set('users/' + id, null).then(() => {
+      loadAllData();
+    });
+  }
+
+  // ============================================================
+  // PREDICTIONS
+  // ============================================================
+  function renderPredictions() {
+    const search = document.getElementById('predSearch')?.value?.toLowerCase() || '';
+    const status = document.getElementById('predStatus')?.value || '';
+    const tbody = document.getElementById('predictionsTableBody');
+    let filtered = Object.values(allPredictions);
+    if (search) filtered = filtered.filter(p => (p.userName || '').toLowerCase().includes(search) || (p.country || '').toLowerCase().includes(search));
+    if (status) filtered = filtered.filter(p => p.status === status);
+    if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#888;">No predictions found</td></tr>'; return; }
+    
+    const predIds = {};
+    Object.entries(allPredictions).forEach(([key, value]) => {
+      predIds[value.date + value.userName] = key;
+    });
+    
+    tbody.innerHTML = filtered.map(p => {
+      const pid = predIds[p.date + p.userName] || '';
+      return `
+        <tr>
+          <td><strong>${p.userName || '—'}</strong></td>
+          <td>${p.flag || '🏳️'} ${p.country || '—'}</td>
+          <td>UGX ${(p.stake || 0).toLocaleString()}</td>
+          <td>${p.odds || 0}</td>
+          <td>UGX ${((p.stake || 0) * (p.odds || 1)).toLocaleString()}</td>
+          <td><span class="badge badge-${p.status || 'pending'}">${(p.status || 'pending').toUpperCase()}</span></td>
+          <td>${new Date(p.date).toLocaleDateString()}</td>
+          <td>
+            <button class="btn btn-success btn-sm" onclick="updatePred('${pid}','won')">🏆 Won</button>
+            <button class="btn btn-danger btn-sm" onclick="updatePred('${pid}','lost')">❌ Lost</button>
+            <button class="btn btn-warning btn-sm" onclick="updatePred('${pid}','cancelled')">⏹️ Cancel</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function updatePred(id, status) {
+    if (!confirm('Change to ' + status.toUpperCase() + '?')) return;
+    const pred = allPredictions[id];
+    if (!pred) return;
+    pred.status = status;
+    
+    if (status === 'won') {
+      const winAmount = (pred.stake || 0) * (pred.odds || 1);
+      Object.entries(allUsers).forEach(([uid, user]) => {
+        if (user.name === pred.userName) {
+          user.balance = (user.balance || 0) + winAmount;
+          DB.set('users/' + uid, user);
+        }
+      });
+      const txId = DB.generateId();
+      const tx = { type: 'winnings', userName: pred.userName, amount: winAmount, description: 'Won prediction: ' + pred.country, date: new Date().toISOString() };
+      allTransactions[txId] = tx;
+      DB.set('transactions/' + txId, tx);
+    }
+    
+    DB.set('predictions/' + id, pred).then(() => {
+      loadAllData();
+    });
+  }
+
+  // ============================================================
+  // TEAMS & ODDS
+  // ============================================================
+  function renderTeams() {
+    const tbody = document.getElementById('teamsTableBody');
+    const teams = allTeams.length > 0 ? allTeams : DEFAULT_TEAMS;
+    if (!teams.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:30px;color:#888;">No teams. Add one.</td></tr>'; return; }
+    tbody.innerHTML = teams.map((t, i) => `
+      <tr>
+        <td><strong>${t.name}</strong></td>
+        <td style="font-size:24px;">${t.flag || '🏳️'}</td>
+        <td><input type="number" step="0.1" value="${t.odds}" id="odds_${i}" style="width:80px;padding:4px 8px;border:2px solid #e0e0e0;border-radius:6px;font-weight:600;"></td>
+        <td>
+          <button class="btn btn-primary btn-sm" onclick="saveOdds(${i})">💾 Save</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteTeam(${i})">🗑️</button>
+        </td>
+      </tr>
+    `).join('');
+    populateWinnerSelect();
+  }
+
+  function saveOdds(index) {
+    const input = document.getElementById('odds_' + index);
+    const newOdds = parseFloat(input.value);
+    if (isNaN(newOdds) || newOdds <= 0) { showToast('Error', 'Enter a valid odds number', 'error'); return; }
+    allTeams[index].odds = newOdds;
+    DB.set('teams', allTeams).then(() => {
+      showToast('Success', 'Odds updated for ' + allTeams[index].name + ' to ' + newOdds, 'success');
+      renderTeams();
+    });
+  }
+
+  function openTeamModal() {
+    document.getElementById('modalTeamName').value = '';
+    document.getElementById('modalTeamFlag').value = '';
+    document.getElementById('modalTeamOdds').value = '';
+    document.getElementById('teamModal').classList.add('active');
+  }
+
+  function saveTeam() {
+    const name = document.getElementById('modalTeamName').value.trim();
+    const flag = document.getElementById('modalTeamFlag').value.trim();
+    const odds = parseFloat(document.getElementById('modalTeamOdds').value);
+    if (!name || !flag || isNaN(odds) || odds <= 0) { showToast('Error', 'Fill all fields with valid values', 'error'); return; }
+    const teams = allTeams.length > 0 ? allTeams : DEFAULT_TEAMS;
+    teams.push({ name, flag, odds });
+    DB.set('teams', teams).then(() => {
+      closeModal('teamModal');
+      renderTeams();
+      showToast('Success', 'Team added successfully', 'success');
+    });
+  }
+
+  function deleteTeam(index) {
+    if (!confirm('Delete ' + allTeams[index].name + '?')) return;
+    allTeams.splice(index, 1);
+    DB.set('teams', allTeams).then(() => {
+      renderTeams();
+    });
+  }
+
+  // ============================================================
+  // TRANSACTIONS
+  // ============================================================
+  function renderTransactions() {
+    const type = document.getElementById('txType')?.value || '';
+    const tbody = document.getElementById('transactionsTableBody');
+    let filtered = Object.values(allTransactions);
+    if (type) filtered = filtered.filter(t => t.type === type);
+    if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#888;">No transactions</td></tr>'; return; }
+    tbody.innerHTML = filtered.map(t => `
+      <tr>
+        <td><strong>${t.userName || '—'}</strong></td>
+        <td><span class="badge badge-active">${t.type || '—'}</span></td>
+        <td>UGX ${(t.amount || 0).toLocaleString()}</td>
+        <td>${new Date(t.date).toLocaleDateString()}</td>
+        <td>${t.description || '—'}</td>
+        <td><span class="badge badge-active">Completed</span></td>
+      </tr>
+    `).join('');
+  }
+
+  // ============================================================
+  // REFERRALS
+  // ============================================================
+  function renderReferrals() {
+    const tbody = document.getElementById('referralsTableBody');
+    const userList = Object.values(allUsers);
+    if (!userList.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:30px;color:#888;">No users</td></tr>'; return; }
+    tbody.innerHTML = userList.map(u => `
+      <tr>
+        <td><strong>${u.name || '—'}</strong></td>
+        <td>${'REF' + (u.phone || '').slice(-6).toUpperCase()}</td>
+        <td>${u.referrals || 0}</td>
+        <td>UGX ${(u.referralEarnings || 0).toLocaleString()}</td>
+      </tr>
+    `).join('');
+  }
+
+  // ============================================================
+  // WINNER ANNOUNCEMENT
+  // ============================================================
+  function openWinnerModal() {
+    populateWinnerSelect();
+    document.getElementById('winnerModal').classList.add('active');
+  }
+
+  function populateWinnerSelect() {
+    const select = document.getElementById('winnerTeamSelect');
+    const teams = allTeams.length > 0 ? allTeams : DEFAULT_TEAMS;
+    select.innerHTML = teams.map(t => `<option value="${t.name}">${t.flag} ${t.name}</option>`).join('');
+  }
+
+  function confirmWinner() {
+    const teamName = document.getElementById('winnerTeamSelect').value;
+    if (!teamName) { showToast('Error', 'Select a team', 'error'); return; }
+    if (!confirm('Announce ' + teamName + ' as World Cup winner? This will pay all users who predicted this team.')) return;
+    
+    const predList = Object.values(allPredictions);
+    const winners = predList.filter(p => p.country === teamName && p.status === 'active');
+    let paid = 0;
+    
+    winners.forEach(p => {
+      Object.entries(allUsers).forEach(([uid, user]) => {
+        if (user.name === p.userName) {
+          const win = (p.stake || 0) * (p.odds || 1);
+          user.balance = (user.balance || 0) + win;
+          DB.set('users/' + uid, user);
+          const txId = DB.generateId();
+          const tx = { type: 'winnings', userName: user.name, amount: win, description: 'World Cup winner: ' + teamName, date: new Date().toISOString() };
+          allTransactions[txId] = tx;
+          DB.set('transactions/' + txId, tx);
+          paid++;
+        }
+      });
+      p.status = 'won';
+      DB.set('predictions/' + (p.id || DB.generateId()), p);
+    });
+    
+    closeModal('winnerModal');
+    showToast('Success', paid + ' winners paid for ' + teamName, 'success');
+    loadAllData();
+  }
+
+  // ============================================================
+  // SETTINGS
+  // ============================================================
+  function toggleMarzKeyVisibility() {
+    const input = document.getElementById('marzApiKey');
+    const button = event.target;
+    
+    if (input.type === 'password') {
+      input.type = 'text';
+      button.textContent = '🙈 Hide';
+    } else {
+      input.type = 'password';
+      button.textContent = '👁️ Show';
+    }
+  }
+
+  function saveSettings() {
+    const settings = {
+      minStake: parseInt(document.getElementById('minStake').value),
+      maxStake: parseInt(document.getElementById('maxStake').value),
+      maxPayout: parseInt(document.getElementById('maxPayout').value),
+      taxPercent: parseFloat(document.getElementById('taxPercent').value),
+      referralPercent: parseFloat(document.getElementById('referralPercent').value),
+      welcomeBonus: parseInt(document.getElementById('welcomeBonus').value),
+      bettingOpen: document.getElementById('bettingOpen').checked,
+      supportEmail: document.getElementById('supportEmail').value,
+      whatsappLink: document.getElementById('whatsappLink').value,
+      marzApiKey: document.getElementById('marzApiKey').value.trim(),
+      depositFeePercent: parseFloat(document.getElementById('depositFeePercent').value),
+      withdrawManual: document.getElementById('withdrawManual').checked,
+      withdrawFeePercent: parseFloat(document.getElementById('withdrawFeePercent').value),
+      withdrawLocked: document.getElementById('withdrawLocked').checked,
+      lastUpdated: new Date().toISOString()
+    };
+    
+    // Save to Firebase Realtime Database only
+    DB.set('settings', settings).then(() => {
+      showToast('Success', 'Settings saved successfully', 'success');
+    }).catch(error => {
+      showToast('Error', 'Failed to save settings: ' + error.message, 'error');
+    });
+  }
+
+  // ============================================================
+  // DANGER ZONE
+  // ============================================================
+  function confirmDelete(type) {
+    if (!confirm('Delete ALL ' + type.toUpperCase() + '?')) return;
+    if (!confirm('Are you sure? This cannot be undone!')) return;
+    
+    if (type === 'users') {
+      allUsers = {};
+      DB.set('users', null).then(() => loadAllData());
+    }
+    if (type === 'predictions') {
+      allPredictions = {};
+      DB.set('predictions', null).then(() => loadAllData());
+    }
+    if (type === 'transactions') {
+      allTransactions = {};
+      DB.set('transactions', null).then(() => loadAllData());
+    }
+    showToast('Success', type.toUpperCase() + ' deleted successfully', 'success');
+  }
+
+  function resetAll() {
+    if (!confirm('RESET ALL DATA?')) return;
+    if (!confirm('This will delete ALL users, predictions, transactions. Are you 100% sure?')) return;
+    allUsers = {};
+    allPredictions = {};
+    allTransactions = {};
+    Promise.all([
+      DB.set('users', null),
+      DB.set('predictions', null),
+      DB.set('transactions', null)
+    ]).then(() => {
+      loadAllData();
+      showToast('Success', 'All data reset successfully', 'success');
+    });
+  }
+
+  // ============================================================
+  // MODALS
+  // ============================================================
+  function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+  // ============================================================
+  // INIT
+  // ============================================================
+  (function init() {
+    checkAdminSession();
+    // Seed default teams if not exists
+    DB.get('teams').then(data => {
+      if (!data) {
+        DB.set('teams', DEFAULT_TEAMS);
+      }
+    });
+  })();
+</script>
+
+<!-- POPUP OVERLAY -->
+<div id="popupOverlay" class="popup-overlay">
+  <div class="popup-box">
+    <span id="popupIcon" class="popup-icon">✓</span>
+    <h3 id="popupTitle" class="popup-title">Success</h3>
+    <p id="popupMessage" class="popup-message">Operation completed successfully</p>
+    <div class="popup-buttons" id="popupButtons">
+      <button class="popup-btn popup-btn-primary" onclick="closePopup()">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+</body>
+</html>

@@ -1,0 +1,3873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Cup Predict</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 0;
+        }
+
+        .phone-container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: #000;
+            border-radius: 0;
+            padding: 0;
+            box-shadow: none;
+        }
+
+        .app-screen {
+            background: white;
+            border-radius: 45px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 900px;
+            position: relative;
+            padding-top: 120px;
+            padding-bottom: 80px;
+        }
+
+        /* STATUS BAR */
+        .status-bar {
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 101;
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .header-subtitle {
+            font-size: 13px;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        /* MAIN CONTENT */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .content::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        /* CARDS */
+        .card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 16px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: 600;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card-icon {
+            font-size: 24px;
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .card-subtitle {
+            font-size: 12px;
+            opacity: 0.85;
+            line-height: 1.5;
+        }
+
+        .card-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.2);
+            margin: 12px 0;
+        }
+
+        /* BALANCE CARD */
+        .balance-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%);
+        }
+
+        /* ACTIVE PREDICTION CARD */
+        .prediction-card {
+            border-left: 4px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .prediction-team {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 12px 0;
+        }
+
+        .team-flag {
+            font-size: 32px;
+        }
+
+        .team-name {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .stake-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+            padding: 12px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 12px;
+        }
+
+        .stake-label {
+            opacity: 0.8;
+        }
+
+        .stake-value {
+            font-weight: 700;
+        }
+
+        /* STATISTICS CARD */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        /* ACTION BUTTON */
+        .action-button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .action-button:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: scale(1.02);
+        }
+
+        .action-button:active {
+            transform: scale(0.98);
+        }
+
+        /* UPCOMING MATCHES */
+        .upcoming-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-top: 24px;
+            margin-bottom: 12px;
+            opacity: 0.9;
+            letter-spacing: 0.5px;
+        }
+
+        .match-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .match-time {
+            font-size: 11px;
+            opacity: 0.8;
+            min-width: 50px;
+        }
+
+        .match-teams {
+            flex: 1;
+            font-weight: 600;
+        }
+
+        .match-flag {
+            font-size: 20px;
+        }
+
+        /* BOTTOM NAVIGATION */
+        .bottom-nav {
+            height: 80px;
+            background: white;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            width: 100%;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            flex: 1;
+            height: 100%;
+            justify-content: center;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            margin: 0 6px;
+            position: relative;
+        }
+
+        .nav-item.active {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .nav-icon {
+            font-size: 24px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #999;
+        }
+
+        .nav-item.active .nav-label {
+            color: #667eea;
+        }
+
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 10%;
+            right: 10%;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+
+        /* EMPTY STATE MESSAGE */
+        .empty-message {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            margin: 12px 0;
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        /* TEAM GRID */
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .team-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .team-card:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-3px);
+        }
+
+        .team-flag {
+            font-size: 32px;
+            margin-bottom: 6px;
+        }
+
+        .team-name {
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* STAKE INPUT */
+        .stake-input-group {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .stake-label-text {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .stake-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .stake-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .stake-info-text {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 8px;
+        }
+
+        /* PAGE VISIBILITY */
+        .page {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .page.active {
+            display: flex;
+        }
+
+        /* BACK BUTTON */
+        .back-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* LEADERBOARD STYLES */
+        .leaderboard-table {
+            width: 100%;
+            margin-top: 12px;
+        }
+
+        .leaderboard-header {
+            display: grid;
+            grid-template-columns: 0.5fr 1.5fr 1fr 0.8fr 0.8fr;
+            gap: 8px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .leaderboard-row {
+            display: grid;
+            grid-template-columns: 0.5fr 1.5fr 1fr 0.8fr 0.8fr;
+            gap: 8px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 12px;
+            align-items: center;
+        }
+
+        .rank-badge {
+            font-weight: 900;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .rank-1 {
+            color: #FFD700;
+        }
+        .rank-2 {
+            color: #C0C0C0;
+        }
+        .rank-3 {
+            color: #CD7F32;
+        }
+
+        .leaderboard-username {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+        }
+
+        .leaderboard-flag {
+            font-size: 16px;
+        }
+
+        .leaderboard-winnings {
+            font-weight: 900;
+            color: white;
+            background: rgba(100, 255, 150, 0.8);
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .leaderboard-stats {
+            text-align: center;
+            font-size: 11px;
+        }
+
+        /* TAB STYLES */
+        .tab-button {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 10px 8px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .tab-button.active {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .phone-container {
+                max-width: 100%;
+                margin: 0;
+                padding: 0;
+                border-radius: 0;
+            }
+
+            .app-screen {
+                height: 100vh;
+                border-radius: 0;
+            }
+
+            .team-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* SCROLLING FLAGS MARQUEE */
+        @keyframes scroll-left {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        .flags-marquee {
+            background: rgba(100, 100, 200, 0.3);
+            padding: 12px;
+            border-radius: 0;
+            overflow: hidden;
+            margin: 0;
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            height: 60px;
+            display: flex;
+            align-items: center;
+        }
+
+        .flags-container {
+            display: flex;
+            gap: 12px;
+            animation: scroll-left 25s linear infinite;
+        }
+
+        .flag-item {
+            font-size: 32px;
+            min-width: 40px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        /* AUTH PAGES STYLES */
+        .auth-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100%;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            padding: 30px 24px;
+            width: 100%;
+            max-width: 400px;
+            color: white;
+        }
+
+        .auth-title {
+            font-size: 28px;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #fff 0%, #e0e0ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .auth-subtitle {
+            text-align: center;
+            font-size: 13px;
+            opacity: 0.8;
+            margin-bottom: 24px;
+        }
+
+        .auth-input-group {
+            margin-bottom: 16px;
+        }
+
+        .auth-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .auth-input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .auth-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .auth-select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            appearance: none;
+        }
+
+        .auth-select option {
+            background: #4a3f7a;
+            color: white;
+        }
+
+        .auth-select:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .auth-checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin: 16px 0;
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .auth-checkbox {
+            margin-top: 2px;
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .auth-checkbox-label {
+            cursor: pointer;
+            line-height: 1.4;
+        }
+
+        .auth-checkbox-label a {
+            color: #a8b5ff;
+            text-decoration: underline;
+        }
+
+        .auth-button {
+            width: 100%;
+            padding: 14px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .auth-button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .auth-button:active {
+            transform: scale(0.98);
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        .auth-switch a {
+            color: #a8b5ff;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
+
+        .auth-error {
+            background: rgba(255, 50, 50, 0.2);
+            border: 1px solid rgba(255, 50, 50, 0.3);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            margin-bottom: 12px;
+            display: none;
+        }
+
+        .auth-error.show {
+            display: block;
+        }
+
+        .auth-success {
+            background: rgba(50, 255, 50, 0.2);
+            border: 1px solid rgba(50, 255, 50, 0.3);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            margin-bottom: 12px;
+            display: none;
+        }
+
+        .auth-success.show {
+            display: block;
+        }
+
+        .referral-prefill {
+            font-size: 11px;
+            opacity: 0.6;
+            margin-top: 4px;
+        }
+
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .auth-divider-line {
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .auth-divider-text {
+            font-size: 11px;
+            opacity: 0.5;
+            text-transform: uppercase;
+        }
+
+        /* ============================================================ */
+        /* POPUP / TOAST SYSTEM */
+        /* ============================================================ */
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .popup-overlay.show {
+            display: flex;
+        }
+
+        .popup-box {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+            text-align: center;
+            animation: popupSlideIn 0.3s ease-out;
+        }
+
+        @keyframes popupSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .popup-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .popup-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+
+        .popup-message {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .popup-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .popup-btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 100px;
+        }
+
+        .popup-btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .popup-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .popup-btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .popup-btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .popup-btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .popup-btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+        }
+
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 3000;
+            max-width: 350px;
+        }
+
+        .toast {
+            background: white;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            animation: toastSlideIn 0.3s ease-out;
+        }
+
+        @keyframes toastSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(400px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .toast.success {
+            border-left: 4px solid #10b981;
+        }
+
+        .toast.error {
+            border-left: 4px solid #ef4444;
+        }
+
+        .toast.warning {
+            border-left: 4px solid #f59e0b;
+        }
+
+        .toast.info {
+            border-left: 4px solid #3b82f6;
+        }
+
+        .toast-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #1a1a1a;
+            margin-bottom: 2px;
+        }
+
+        .toast-message {
+            font-size: 13px;
+            color: #666;
+        }
+
+        /* Phone prefix input */
+        .phone-prefix-wrap {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .phone-prefix-wrap:focus-within {
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .phone-prefix-badge {
+            background: rgba(255, 255, 255, 0.15);
+            border-right: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 12px 14px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #667eea;
+            font-weight: 700;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .phone-prefix-wrap input {
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 12px 14px;
+            flex: 1;
+            color: white;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .phone-prefix-wrap input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .field-hint {
+            font-size: 11px;
+            opacity: 0.6;
+            margin-top: 6px;
+            padding-left: 4px;
+        }
+
+        .field-error {
+            font-size: 11px;
+            color: #ef4444;
+            margin-top: 6px;
+            padding-left: 4px;
+            display: none;
+        }
+
+        .field-error.show {
+            display: block;
+        }
+
+        /* Deposit note */
+        .deposit-note {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 12px;
+            color: #10b981;
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+
+        .charge-note {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 12px;
+            color: #ef4444;
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+
+        .readonly-field {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 13px 14px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #999;
+        }
+
+        .locked-banner {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 12px;
+            color: #ef4444;
+            text-align: center;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+
+        .green-btn {
+            width: 100%;
+            background: #10b981;
+            border: none;
+            border-radius: 14px;
+            padding: 16px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .green-btn:active {
+            transform: scale(0.98);
+        }
+
+        .green-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .red-btn {
+            width: 100%;
+            background: #ef4444;
+            border: none;
+            border-radius: 14px;
+            padding: 16px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .red-btn:active {
+            transform: scale(0.98);
+        }
+
+        .red-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* Tab pages for predictions */
+        .tab-page-content {
+            padding: 0 0 80px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <div class="app-screen">
+            <!-- STATUS BAR -->
+            <div class="status-bar">
+                <div style="font-size: 24px;">🌍</div>
+                <div style="font-weight: 900; letter-spacing: 2px; font-size: 24px; text-transform: uppercase; flex: 1; text-align: center;">World Cup Predict</div>
+                <div style="font-size: 24px;">🏆</div>
+            </div>
+
+            <!-- SCROLLING FLAGS MARQUEE -->
+            <div class="flags-marquee" id="flagsMarquee">
+                <div class="flags-container">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- MAIN CONTENT -->
+            <div class="content">
+
+                <!-- LOGIN PAGE -->
+                <div id="loginPage" class="page active">
+                    <div class="auth-container">
+                        <div class="auth-card">
+                            <div class="auth-title">Welcome Back</div>
+                            <div class="auth-subtitle">Login to continue predicting</div>
+
+                            <div id="loginError" class="auth-error">Invalid phone number or password</div>
+                            <div id="loginSuccess" class="auth-success">Login successful! Redirecting...</div>
+
+                            <div class="auth-input-group">
+                                <label class="auth-label">📱 Phone Number</label>
+                                <input type="text" id="loginPhone" class="auth-input" placeholder="Enter your phone number" value="">
+                            </div>
+
+                            <div class="auth-input-group">
+                                <label class="auth-label">🔒 Password</label>
+                                <input type="password" id="loginPassword" class="auth-input" placeholder="Enter your password" value="">
+                            </div>
+
+                            <button class="auth-button" onclick="handleLogin()">Login</button>
+
+                            <div class="auth-switch">
+                                Don't have an account? <a onclick="switchAuth('register')">Register here</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- REGISTER PAGE -->
+                <div id="registerPage" class="page">
+                    <div class="auth-container">
+                        <div class="auth-card">
+                            <div class="auth-title">Create Account</div>
+                            <div class="auth-subtitle">Join WorldCupPredict today!</div>
+
+                            <div id="registerError" class="auth-error">Please fix the errors above</div>
+                            <div id="registerSuccess" class="auth-success">Registration successful! Redirecting...</div>
+
+                            <div class="auth-input-group">
+                                <label class="auth-label">👤 Full Name</label>
+                                <input type="text" id="registerName" class="auth-input" placeholder="Enter your full name" value="">
+                            </div>
+
+                            <div class="auth-input-group">
+                                <label class="auth-label">🌍 Country</label>
+                                <select id="registerCountry" class="auth-select">
+                                    <option value="Uganda">🇺🇬 Uganda</option>
+                                    <option value="Kenya">🇰🇪 Kenya</option>
+                                </select>
+                            </div>
+
+                            <div class="auth-input-group">
+                                <label class="auth-label">📱 Phone Number</label>
+                                <div class="phone-prefix-wrap">
+                                    <div class="phone-prefix-badge" id="regPrefix">+256</div>
+                                    <input type="text" id="registerPhone" class="auth-input" placeholder="7XXXXXXXX" maxlength="9" style="border:none;border-radius:0;padding:12px 14px;background:transparent;">
+                                </div>
+                                <div class="field-hint">9 digits starting with 7</div>
+                            </div>
+
+                            <div class="auth-input-group">
+                                <label class="auth-label">📧 Email Address</label>
+                                <input type="email" id="registerEmail" class="auth-input" placeholder="Enter your email address" value="">
+                            </div>
+
+                            <div class="auth-input-group">
+                                <label class="auth-label">🔗 Referral Code</label>
+                                <input type="text" id="registerReferral" class="auth-input" placeholder="Enter referral code" value="WORLDCUP2026">
+                                <div class="referral-prefill">💡 Default referral code: WORLDCUP2026</div>
+                            </div>
+
+                            <div class="auth-input-group">
+                                <label class="auth-label">🔒 Password (min 4 digits)</label>
+                                <input type="password" id="registerPassword" class="auth-input" placeholder="Enter password (min 4 characters)" value="">
+                            </div>
+
+                            <div class="auth-input-group">
+                                <label class="auth-label">✅ Confirm Password</label>
+                                <input type="password" id="registerConfirmPassword" class="auth-input" placeholder="Confirm your password" value="">
+                            </div>
+
+                            <div class="auth-checkbox-group">
+                                <input type="checkbox" id="registerTerms" class="auth-checkbox">
+                                <label for="registerTerms" class="auth-checkbox-label">
+                                    I agree to the <a onclick="showTerms()">Terms and Conditions</a>
+                                </label>
+                            </div>
+
+                            <button class="auth-button" onclick="handleRegister()">Create Account</button>
+
+                            <div class="auth-switch">
+                                Already have an account? <a onclick="switchAuth('login')">Login here</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HOME PAGE -->
+                <div id="homePage" class="page">
+                    <!-- BALANCE CARD -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Your Balance</div>
+                            <div class="card-icon">💵</div>
+                        </div>
+                        <div class="card-value" id="userBalance">UGX 0</div>
+                        <div class="card-subtitle">Available to stake on predictions</div>
+                        <div style="display: flex; gap: 12px; margin-top: 12px;">
+                            <button class="action-button" style="flex: 1; background: rgba(255,255,255,0.9); color: #667eea; margin-top: 0;" onclick="depositFunds()">Deposit</button>
+                            <button class="action-button" style="flex: 1; background: rgba(255,255,255,0.9); color: #667eea; margin-top: 0;" onclick="withdrawFunds()">Withdraw</button>
+                        </div>
+                    </div>
+
+                    <!-- ACTION TABS - FIRST ROW -->
+                    <div style="display: flex; gap: 8px; margin: 16px 0;">
+                        <button class="tab-button active" onclick="switchTab(this, 'myPicksTab')" style="flex: 1; background: rgba(100, 150, 255, 0.4); border-color: rgba(100, 150, 255, 0.6);">My Picks</button>
+                        <button class="tab-button" onclick="switchTab(this, 'pendingTab')" style="flex: 1; background: rgba(255, 200, 100, 0.4); border-color: rgba(255, 200, 100, 0.6);">Pending</button>
+                        <button class="tab-button" onclick="switchTab(this, 'winTab')" style="flex: 1; background: rgba(100, 255, 150, 0.4); border-color: rgba(100, 255, 150, 0.6);">Win</button>
+                        <button class="tab-button" onclick="switchTab(this, 'lostTab')" style="flex: 1; background: rgba(255, 100, 100, 0.4); border-color: rgba(255, 100, 100, 0.6);">Lost</button>
+                    </div>
+
+                    <!-- ACTION TABS - SECOND ROW -->
+                    <div style="display: flex; gap: 8px; margin: 0 0 16px 0;">
+                        <button class="tab-button" onclick="switchTab(this, 'cancelledTab')" style="flex: 1; background: rgba(100, 255, 150, 0.5); border-color: rgba(100, 255, 150, 0.8);">Cancelled</button>
+                        <button class="tab-button" onclick="switchTab(this, 'companyTab')" style="flex: 1; background: rgba(50, 50, 80, 0.6); border-color: rgba(50, 50, 80, 0.8);">Company</button>
+                        <button class="tab-button" onclick="showPage('callInPage')" style="flex: 1; background: rgba(255, 200, 50, 0.5); border-color: rgba(255, 200, 50, 0.8);">Call In</button>
+                        <button class="tab-button" onclick="showPage('supportPage')" style="flex: 1; background: rgba(200, 150, 255, 0.5); border-color: rgba(200, 150, 255, 0.8);">Support</button>
+                    </div>
+
+                    <!-- TAB CONTENT -->
+                    <div id="myPicksTab" class="tab-content active">
+                        <div class="empty-message">Your active predictions will appear here</div>
+                    </div>
+                    <div id="pendingTab" class="tab-content">
+                        <div class="empty-message">No pending predictions</div>
+                    </div>
+                    <div id="winTab" class="tab-content">
+                        <div class="empty-message">No winning predictions yet</div>
+                    </div>
+                    <div id="lostTab" class="tab-content">
+                        <div class="empty-message">No losing predictions yet</div>
+                    </div>
+                    <div id="cancelledTab" class="tab-content">
+                        <div class="empty-message">No cashed out predictions yet</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Betting Status</div>
+                            <div class="card-icon">🔔</div>
+                        </div>
+                        <div style="font-size: 16px; font-weight: 700; margin: 12px 0;">
+                            <span id="bettingStatus" style="background: rgba(76, 175, 80, 0.3); padding: 8px 12px; border-radius: 8px;">BETTING OPEN</span>
+                        </div>
+                        <div class="card-subtitle">Deadline: <span id="deadline">July 17, 2026 at 2:00 PM</span></div>
+                    </div>
+
+                    <!-- STATISTICS CARD -->
+                    <div class="card" style="padding: 12px;">
+                        <div class="card-header" style="margin-bottom: 12px;">
+                            <div class="card-title" style="font-size: 12px;">Your Statistics</div>
+                            <div class="card-icon" style="font-size: 18px;">📈</div>
+                        </div>
+
+                        <div class="stats-grid" style="gap: 8px;">
+                            <div class="stat-item" style="padding: 10px;">
+                                <div class="stat-value" id="totalPredictions" style="font-size: 20px;">0</div>
+                                <div class="stat-label" style="font-size: 11px;">Predictions</div>
+                            </div>
+                            <div class="stat-item" style="padding: 10px;">
+                                <div class="stat-value" id="winRate" style="font-size: 20px;">0%</div>
+                                <div class="stat-label" style="font-size: 11px;">Win Rate</div>
+                            </div>
+                            <div class="stat-item" style="padding: 10px;">
+                                <div class="stat-value" id="correctPredictions" style="font-size: 20px;">0</div>
+                                <div class="stat-label" style="font-size: 11px;">Correct</div>
+                            </div>
+                            <div class="stat-item" style="padding: 10px;">
+                                <div class="stat-value" id="totalWinnings" style="font-size: 16px;">UGX 0</div>
+                                <div class="stat-label" style="font-size: 11px;">Winnings</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- QUICK ACTION BUTTON -->
+                    <button class="action-button" onclick="goToPredict()">Make Your Prediction</button>
+
+                    <!-- RECENT TRANSACTIONS -->
+                    <div class="upcoming-title">Recent Activity</div>
+                    <div id="transactionsList">
+                        <div class="match-item">
+                            <div class="match-time">Today</div>
+                            <div class="match-teams">No transactions yet</div>
+                            <div class="match-flag" style="color: #4caf50;">💼</div>
+                        </div>
+                    </div>
+
+                    <!-- PADDING FOR SCROLLING -->
+                    <div style="height: 20px;"></div>
+                </div>
+
+                <!-- PREDICT PAGE -->
+                <div id="predictPage" class="page">
+                    <div class="card" style="background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%); text-align: center; margin-bottom: 16px; padding: 20px;">
+                        <div style="font-size: 40px; margin-bottom: 12px;">🌍</div>
+                        <div style="font-size: 24px; font-weight: 900; margin-bottom: 8px;">Pick Your World Cup Champion!</div>
+                        <div class="card-subtitle">Select a team and place your prediction to win big</div>
+                    </div>
+
+                    <div style="text-align: center; margin-bottom: 16px;">
+                        <div class="upcoming-title">⚽ SELECT YOUR TEAM</div>
+                        <div class="card-subtitle">Click on a team to place your prediction</div>
+                    </div>
+
+                    <div class="team-grid" id="teamGrid">
+                        <!-- Teams will be populated by JavaScript -->
+                    </div>
+
+                    <div style="height: 20px;"></div>
+                </div>
+
+                <!-- STAKE SELECTION PAGE -->
+                <div id="stakePage" class="page">
+                    <button class="back-button" onclick="backToTeamSelection()">← Back to Teams</button>
+
+                    <div class="card" style="text-align: center;">
+                        <div class="team-flag" id="selectedTeamFlag" style="font-size: 48px; margin-bottom: 12px;">🇧🇷</div>
+                        <div class="card-value" id="selectedTeamName" style="margin-bottom: 8px;">Brazil</div>
+
+                        <div style="background: rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 8px; margin: 12px 0;">
+                            <div class="card-subtitle" style="margin-bottom: 6px;">ODDS</div>
+                            <div style="font-size: 28px; font-weight: 900;" id="selectedTeamOdds">4.00</div>
+                        </div>
+                    </div>
+
+                    <div class="stake-input-group">
+                        <label class="stake-label-text">Enter Your Stake Amount</label>
+                        <input type="number" class="stake-input" id="stakeAmount" placeholder="Min: UGX 6,000" min="6000" max="5000000" value="6000">
+                        <div class="stake-info-text">
+                            💰 Min: UGX 6,000 | Max: UGX 5,000,000
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="stake-info">
+                            <div>
+                                <div class="stake-label">Your Stake</div>
+                                <div class="stake-value" id="displayStake">UGX 6,000</div>
+                            </div>
+                            <div>
+                                <div class="stake-label">Potential Win</div>
+                                <div class="stake-value" id="displayPotentialWin">UGX 24,000</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="action-button" style="width: 100%; margin-top: 16px;" onclick="confirmPrediction()">✓ CONFIRM PREDICTION</button>
+
+                    <div style="height: 20px;"></div>
+                </div>
+
+                <!-- LEADERBOARD PAGE -->
+                <div id="leaderboardPage" class="page">
+                    <div class="card" style="background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%); text-align: center; margin-bottom: 16px; padding: 16px;">
+                        <div style="font-size: 32px; margin-bottom: 8px;">🏆</div>
+                        <div style="font-size: 20px; font-weight: 900;">TOP 10 PREDICTORS</div>
+                        <div class="card-subtitle">Leaderboard (Updated Daily)</div>
+                    </div>
+
+                    <div class="leaderboard-table">
+                        <div class="leaderboard-header">
+                            <div>#</div>
+                            <div>User</div>
+                            <div>Winnings</div>
+                            <div>Win%</div>
+                            <div>Preds</div>
+                        </div>
+                        <div id="leaderboardList">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div style="height: 20px;"></div>
+                </div>
+
+                <!-- COMPANY PAGE -->
+                <div id="companyPage" class="page">
+                    <button class="back-button" onclick="showPage('homePage')" style="margin: 16px;">← Back</button>
+                    <div class="card" style="text-align: center; margin: 16px;">
+                        <div style="font-size: 24px; font-weight: 900;">About Company</div>
+                    </div>
+                    <div class="content" style="padding: 0 16px 80px 16px;">
+                        <div style="background: rgba(50, 50, 80, 0.4); padding: 16px; border-radius: 8px; color: white; line-height: 1.6; font-size: 13px;">
+
+                            <div style="font-size: 18px; font-weight: 900; margin-bottom: 16px; text-align: center; color: #fff;">ABOUT WORLDCUPPREDICT</div>
+
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-weight: 700; margin-bottom: 8px;">Company Overview:</div>
+                                <div style="opacity: 0.9;">WorldCupPredict is a leading global online sports prediction platform based in England, dedicated to providing users worldwide with an exciting and secure environment to predict World Cup outcomes and win big rewards.</div>
+                            </div>
+
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-weight: 700; margin-bottom: 8px;">Mission:</div>
+                                <div style="opacity: 0.9;">To deliver a transparent, fair, and engaging platform where football enthusiasts across the globe can test their prediction skills and win based on their knowledge and strategy.</div>
+                            </div>
+
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-weight: 700; margin-bottom: 8px;">Why Choose WorldCupPredict?</div>
+                                <div style="opacity: 0.9;">
+                                    • Fair and transparent odds<br>
+                                    • Instant deposits and withdrawals via Mobile Money (MTN/Airtel) and Bank Transfer<br>
+                                    • Licensed and regulated by UK Gambling Commission<br>
+                                    • User-friendly platform<br>
+                                    • 24/7 customer support<br>
+                                    • High payout limits up to UGX 700,000,000<br>
+                                    • Available in all countries worldwide
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-weight: 700; margin-bottom: 8px;">Key Features:</div>
+                                <div style="opacity: 0.9;">
+                                    • Real-time prediction updates<br>
+                                    • Secure Mobile Money and Bank Transfer transactions<br>
+                                    • Live leaderboards and rankings<br>
+                                    • Fair odds calculation<br>
+                                    • Transparent tax structure (3% on winnings)<br>
+                                    • 24/7 customer support<br>
+                                    • Global accessibility – bet from anywhere in the world
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-weight: 700; margin-bottom: 8px;">Platform Statistics:</div>
+                                <div style="opacity: 0.9;">
+                                    • Minimum stake: UGX 1,000<br>
+                                    • Maximum stake: UGX 5,000,000<br>
+                                    • Maximum payout: UGX 700,000,000<br>
+                                    • Active users: Thousands worldwide<br>
+                                    • Total transactions: Millions in UGX
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-weight: 700; margin-bottom: 8px;">Important Dates:</div>
+                                <div style="opacity: 0.9;">
+                                    • Betting deadline: July 17, 2026 at 2:00 PM<br>
+                                    • World Cup Final: July 19, 2026 at 22:00
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-weight: 700; margin-bottom: 8px;">Partnerships (62+ Licensed Betting Sites):</div>
+                                <div style="opacity: 0.9; font-size: 12px;">
+                                    <a href="#" onclick="openLink('https://betway.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Betway</a>
+                                    <a href="#" onclick="openLink('https://betpawa.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">betPawa</a>
+                                    <a href="#" onclick="openLink('https://1xbet.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">1xBet</a>
+                                    <a href="#" onclick="openLink('https://sportybet.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">SportyBet</a>
+                                    <a href="#" onclick="openLink('https://premierbet.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">PremierBet</a>
+                                    <a href="#" onclick="openLink('https://betika.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Betika</a>
+                                    <a href="#" onclick="openLink('https://sportpesa.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">SportPesa</a>
+                                    <a href="#" onclick="openLink('https://hollywoodbets.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Hollywoodbets</a>
+                                    <a href="#" onclick="openLink('https://betking.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">BetKing</a>
+                                    <a href="#" onclick="openLink('https://melbet.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Melbet</a>
+                                    <a href="#" onclick="openLink('https://dafabet.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Dafabet</a>
+                                    <a href="#" onclick="openLink('https://megapari.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Megapari</a>
+                                    <a href="#" onclick="openLink('https://winbet.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">WinBet</a>
+                                    <a href="#" onclick="openLink('https://888bet.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">888bet</a>
+                                    <a href="#" onclick="openLink('https://22bet.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">22Bet</a>
+                                    <a href="#" onclick="openLink('https://betwinner.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Betwinner</a>
+                                    <a href="#" onclick="openLink('https://10bet.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">10bet</a>
+                                    <a href="#" onclick="openLink('https://parimatch.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Parimatch</a>
+                                    <a href="#" onclick="openLink('https://mostbet.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Mostbet</a>
+                                    <a href="#" onclick="openLink('https://stake.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Stake</a>
+                                    <a href="#" onclick="openLink('https://bet9ja.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Bet9ja</a>
+                                    <a href="#" onclick="openLink('https://nairabet.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Nairabet</a>
+                                    <a href="#" onclick="openLink('https://betkingngeria.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">BetKing Nigeria</a>
+                                    <a href="#" onclick="openLink('https://odibets.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Odibets</a>
+                                    <a href="#" onclick="openLink('https://betikakenya.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Betika Kenya</a>
+                                    <a href="#" onclick="openLink('https://sportpesakkenya.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">SportPesa Kenya</a>
+                                    <a href="#" onclick="openLink('https://myfaircasino.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Mayfair Casino</a>
+                                    <a href="#" onclick="openLink('https://hollywoodbets.co.za'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Hollywoodbets SA</a>
+                                    <a href="#" onclick="openLink('https://betway.co.za'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Betway SA</a>
+                                    <a href="#" onclick="openLink('https://supabets.co.za'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Supabets</a>
+                                    <a href="#" onclick="openLink('https://10bet.co.za'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">10bet SA</a>
+                                    <a href="#" onclick="openLink('https://betfred.co.za'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">BetfredZA</a>
+                                    <a href="#" onclick="openLink('https://sportingbet.co.za'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Sportingbet SA</a>
+                                    <a href="#" onclick="openLink('https://gbets.co.za'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Gbets</a>
+                                    <a href="#" onclick="openLink('https://sunbet.co.za'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Sunbet</a>
+                                    <a href="#" onclick="openLink('https://worldsportsbetting.co.za'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">World Sports Betting</a>
+                                    <a href="#" onclick="openLink('https://easybet.co.za'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">EasyBet</a>
+                                    <a href="#" onclick="openLink('https://yesplay.co.za'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">YesPlay</a>
+                                    <a href="#" onclick="openLink('https://lottostar.co.za'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">LottoStar</a>
+                                    <a href="#" onclick="openLink('https://soccer6.co.za'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Soccer6</a>
+                                    <a href="#" onclick="openLink('https://betxchange.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">BetXchange</a>
+                                    <a href="#" onclick="openLink('https://interbet.co.ke'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Interbet</a>
+                                    <a href="#" onclick="openLink('https://bettabets.co.ke'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Bettabets</a>
+                                    <a href="#" onclick="openLink('https://goldrush.bet'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Goldrush</a>
+                                    <a href="#" onclick="openLink('https://sokabet.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">SokaBet</a>
+                                    <a href="#" onclick="openLink('https://galsportbetting.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Gal Sportbetting</a>
+                                    <a href="#" onclick="openLink('https://mkekabet.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">MkekaBet</a>
+                                    <a href="#" onclick="openLink('https://betwayghana.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Betway Ghana</a>
+                                    <a href="#" onclick="openLink('https://premierbetghana.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">PremierBet Ghana</a>
+                                    <a href="#" onclick="openLink('https://fortebet.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Fortebet</a>
+                                    <a href="#" onclick="openLink('https://elephantbet.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">ElephantBet</a>
+                                    <a href="#" onclick="openLink('https://bet223.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">bet223</a>
+                                    <a href="#" onclick="openLink('https://ngenge.bet'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">NgeNge</a>
+                                    <a href="#" onclick="openLink('https://congobet.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">CongoBet</a>
+                                    <a href="#" onclick="openLink('https://gamemania.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">GameMania</a>
+                                    <a href="#" onclick="openLink('https://dashbet.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">DashBet</a>
+                                    <a href="#" onclick="openLink('https://saharasgames.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Sahara Games</a>
+                                    <a href="#" onclick="openLink('https://merrybet.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">MerryBet</a>
+                                    <a href="#" onclick="openLink('https://paripesa.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">Paripesa</a>
+                                    <a href="#" onclick="openLink('https://888starz.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">888Starz</a>
+                                    <a href="#" onclick="openLink('https://1win.com'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">1win</a>
+                                    <a href="#" onclick="openLink('https://bc.game'); return false;" style="color: #667eea; text-decoration: none; margin-right: 8px;">BC.GAME</a>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-weight: 700; margin-bottom: 8px;">Global Reach:</div>
+                                <div style="opacity: 0.9;">WorldCupPredict is available in ALL COUNTRIES worldwide. You can bet from anywhere – whether you are in Africa, Europe, Asia, North America, South America, or Australia.</div>
+                            </div>
+
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-weight: 700; margin-bottom: 8px;">Licensing and Regulation:</div>
+                                <div style="opacity: 0.9;">All bets and payouts are processed automatically and are fully licensed and regulated by the UK Gambling Commission for your safety and peace of mind.<br><br>License Number: UKGC-2026-0182</div>
+                            </div>
+
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-weight: 700; margin-bottom: 8px;">Important Notice:</div>
+                                <div style="opacity: 0.9;">
+                                    • You must be 18 years and above to bet (or legal age in your country).<br>
+                                    • Please bet responsibly. Betting is addictive and can be psychologically harmful.<br>
+                                    • Visit <a href="https://www.gambleaware.org" target="_blank" style="color: #667eea; text-decoration: none;">GambleAware.org</a> for support.
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-weight: 700; margin-bottom: 8px;">Winnings and Payouts:</div>
+                                <div style="opacity: 0.9;">Congratulations on your wins! Your winnings are credited instantly to your balance account. After the last whistle of the World Cup Final, you can easily withdraw your earnings to your Mobile Money account or Bank Account – available worldwide.</div>
+                            </div>
+
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-weight: 700; margin-bottom: 8px;">Safety and Security:</div>
+                                <div style="opacity: 0.9;">
+                                    • Fully licensed and regulated by UKGC<br>
+                                    • Secure payment gateway<br>
+                                    • User data protection<br>
+                                    • Fair gaming practices
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-weight: 700; margin-bottom: 8px;">Refer and Earn:</div>
+                                <div style="opacity: 0.9;">Refer a friend and earn 5% of their stake amount when they bet!<br><br>• No limits<br>• Unlimited referrals<br>• Commission credited instantly</div>
+                            </div>
+
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-weight: 700; margin-bottom: 8px;">Contact Us:</div>
+                                <div style="opacity: 0.9;">Email: <a href="mailto:support@worldcuppredict.com" style="color: #667eea; text-decoration: none;">support@worldcuppredict.com</a><br>Office: London, United Kingdom</div>
+                            </div>
+
+                            <div style="text-align: center; font-weight: 900; font-size: 14px; color: #667eea; margin-top: 16px;">JOIN WORLDCUPPREDICT TODAY AND WIN BIG!</div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MY PICKS PAGE -->
+                <div id="myPicksPage" class="page">
+                    <button class="back-button" onclick="showPage('homePage')" style="margin: 16px;">← Back</button>
+                    <div class="card" style="text-align: center; margin: 16px;">
+                        <div style="font-size: 24px; font-weight: 900;">My Picks</div>
+                    </div>
+                    <div class="content" style="padding: 0 16px 80px 16px;">
+                        <div class="tab-page-content">
+                            <!-- Content populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PENDING PAGE -->
+                <div id="pendingPage" class="page">
+                    <button class="back-button" onclick="showPage('homePage')" style="margin: 16px;">← Back</button>
+                    <div class="card" style="text-align: center; margin: 16px;">
+                        <div style="font-size: 24px; font-weight: 900;">Pending</div>
+                    </div>
+                    <div class="content" style="padding: 0 16px 80px 16px;">
+                        <div class="tab-page-content">
+                            <!-- Content populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- WIN PAGE -->
+                <div id="winPage" class="page">
+                    <button class="back-button" onclick="showPage('homePage')" style="margin: 16px;">← Back</button>
+                    <div class="card" style="text-align: center; margin: 16px;">
+                        <div style="font-size: 24px; font-weight: 900;">Winning</div>
+                    </div>
+                    <div class="content" style="padding: 0 16px 80px 16px;">
+                        <div class="tab-page-content">
+                            <!-- Content populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LOST PAGE -->
+                <div id="lostPage" class="page">
+                    <button class="back-button" onclick="showPage('homePage')" style="margin: 16px;">← Back</button>
+                    <div class="card" style="text-align: center; margin: 16px;">
+                        <div style="font-size: 24px; font-weight: 900;">Lost</div>
+                    </div>
+                    <div class="content" style="padding: 0 16px 80px 16px;">
+                        <div class="tab-page-content">
+                            <!-- Content populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CANCELLED PAGE -->
+                <div id="cancelledPage" class="page">
+                    <button class="back-button" onclick="showPage('homePage')" style="margin: 16px;">← Back</button>
+                    <div class="card" style="text-align: center; margin: 16px; background: rgba(100, 255, 150, 0.3);">
+                        <div style="font-size: 24px; font-weight: 900;">Cashed Out</div>
+                    </div>
+                    <div class="content" style="padding: 0 16px 80px 16px;">
+                        <div class="tab-page-content">
+                            <!-- Content populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PROFILE PAGE -->
+                <div id="profilePage" class="page">
+                    <button class="back-button" onclick="showPage('homePage')" style="margin: 16px;">← Back</button>
+                    <div class="card" style="text-align: center; margin: 16px;">
+                        <div style="font-size: 24px; font-weight: 900;">My Profile</div>
+                    </div>
+                    <div style="flex: 1; overflow-y: auto; padding: 0 16px 16px 16px;">
+
+                        <!-- USER INFO CARD -->
+                        <div class="card" style="margin-bottom: 16px;">
+                            <div class="card-header">
+                                <div class="card-title">Account Information</div>
+                            </div>
+                            <div style="padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 12px;">
+                                <div style="font-size: 11px; opacity: 0.7; text-transform: uppercase; margin-bottom: 4px;">Full Name</div>
+                                <div style="font-size: 14px; font-weight: 700;" id="profileUsername">-</div>
+                            </div>
+                            <div style="padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 12px;">
+                                <div style="font-size: 11px; opacity: 0.7; text-transform: uppercase; margin-bottom: 4px;">Phone (Masked)</div>
+                                <div style="font-size: 14px; font-weight: 700;" id="profilePhoneMasked">-</div>
+                            </div>
+                            <div style="padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 12px;">
+                                <div style="font-size: 11px; opacity: 0.7; text-transform: uppercase; margin-bottom: 4px;">Email</div>
+                                <div style="font-size: 14px; font-weight: 700;" id="profileEmail">-</div>
+                            </div>
+                            <div style="padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 12px;">
+                                <div style="font-size: 11px; opacity: 0.7; text-transform: uppercase; margin-bottom: 4px;">Country</div>
+                                <div style="font-size: 14px; font-weight: 700;" id="profileCountry">-</div>
+                            </div>
+                            <div style="padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 12px;">
+                                <div style="font-size: 11px; opacity: 0.7; text-transform: uppercase; margin-bottom: 4px;">Registered Date</div>
+                                <div style="font-size: 14px; font-weight: 700;" id="profileRegistered">-</div>
+                            </div>
+                            <div style="padding: 12px 0;">
+                                <div style="font-size: 11px; opacity: 0.7; text-transform: uppercase; margin-bottom: 4px;">Member Since</div>
+                                <div style="font-size: 14px; font-weight: 700;" id="profileMemberSince">-</div>
+                            </div>
+                        </div>
+
+                        <!-- ACCOUNT STATISTICS -->
+                        <div class="card" style="margin-bottom: 16px;">
+                            <div class="card-header">
+                                <div class="card-title">Statistics</div>
+                            </div>
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <div class="stat-value" id="profilePredictions">0</div>
+                                    <div class="stat-label">Predictions</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value" id="profileWinRate">0%</div>
+                                    <div class="stat-label">Win Rate</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value" id="profileWinnings">UGX 0</div>
+                                    <div class="stat-label">Total Won</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value" id="profileBalance">UGX 0</div>
+                                    <div class="stat-label">Balance</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- REFERRAL SECTION -->
+                        <div class="card" style="margin-bottom: 16px;">
+                            <div class="card-header">
+                                <div class="card-title">Referral Program</div>
+                            </div>
+                            <div style="padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 12px;">
+                                <div style="font-size: 11px; opacity: 0.7; text-transform: uppercase; margin-bottom: 4px;">Your Referral Code</div>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <div style="font-size: 14px; font-weight: 700; background: rgba(100, 150, 255, 0.3); padding: 8px 12px; border-radius: 4px; flex: 1;" id="referralCode">-</div>
+                                    <button onclick="copyReferralCode()" style="background: rgba(100, 150, 255, 0.6); color: white; border: none; padding: 8px 12px; border-radius: 4px; font-weight: 700; font-size: 12px; cursor: pointer;">Copy</button>
+                                </div>
+                            </div>
+                            <div style="padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 12px;">
+                                <div style="font-size: 11px; opacity: 0.7; text-transform: uppercase; margin-bottom: 4px;">Total Referrals</div>
+                                <div style="font-size: 14px; font-weight: 700;" id="referralCount">0</div>
+                            </div>
+                            <div style="padding: 12px 0;">
+                                <div style="font-size: 11px; opacity: 0.7; text-transform: uppercase; margin-bottom: 4px;">Referral Earnings</div>
+                                <div style="font-size: 14px; font-weight: 700;" id="referralEarnings">UGX 0</div>
+                            </div>
+                        </div>
+
+                        <!-- RECENT ACTIVITY -->
+                        <div class="card" style="margin-bottom: 16px;">
+                            <div class="card-header">
+                                <div class="card-title">Recent Activity</div>
+                            </div>
+                            <div id="recentActivity" style="font-size: 12px;">
+                                <div style="opacity: 0.7;">No recent transactions</div>
+                            </div>
+                        </div>
+
+                        <!-- CHANGE PASSWORD SECTION -->
+                        <div class="card" style="margin-bottom: 16px;">
+                            <div class="card-header">
+                                <div class="card-title">Change Password</div>
+                            </div>
+                            <div style="padding: 12px 0;">
+                                <div style="font-size: 11px; opacity: 0.7; text-transform: uppercase; margin-bottom: 4px;">Current Password</div>
+                                <input type="password" id="oldPassword" placeholder="Enter current password" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; background: rgba(0,0,0,0.2); color: white; font-size: 13px; margin-bottom: 12px;" />
+
+                                <div style="font-size: 11px; opacity: 0.7; text-transform: uppercase; margin-bottom: 4px;">New Password</div>
+                                <input type="password" id="newPassword" placeholder="Enter new password (min 4 chars)" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; background: rgba(0,0,0,0.2); color: white; font-size: 13px; margin-bottom: 12px;" />
+
+                                <div style="font-size: 11px; opacity: 0.7; text-transform: uppercase; margin-bottom: 4px;">Confirm New Password</div>
+                                <input type="password" id="confirmPassword" placeholder="Confirm new password" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; background: rgba(0,0,0,0.2); color: white; font-size: 13px; margin-bottom: 12px;" />
+
+                                <div style="font-size: 11px; opacity: 0.7; text-transform: uppercase; margin-bottom: 4px;">Phone Number</div>
+                                <input type="text" id="changePhoneNumber" placeholder="Enter phone number" style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; background: rgba(0,0,0,0.2); color: white; font-size: 13px; margin-bottom: 12px;" />
+
+                                <button onclick="changePassword()" style="width: 100%; padding: 12px; background: rgba(255, 80, 80, 0.9); color: white; border: none; border-radius: 4px; font-weight: 900; font-size: 14px; cursor: pointer; margin-bottom: 12px;">Update</button>
+                            </div>
+                        </div>
+
+                        <!-- LOGOUT BUTTON -->
+                        <button onclick="logout()" style="width: 100%; padding: 12px; background: rgba(200, 50, 50, 0.8); color: white; border: none; border-radius: 4px; font-weight: 900; font-size: 14px; cursor: pointer;">Logout</button>
+
+                    </div>
+                </div>
+
+                <!-- CALL IN PAGE -->
+                <div id="callInPage" class="page">
+                    <button class="back-button" onclick="showPage('homePage')" style="margin: 16px;">← Back</button>
+                    <div class="card" style="text-align: center; margin: 16px;">
+                        <div style="font-size: 24px; font-weight: 900;">Invite & Earn</div>
+                    </div>
+                    <div style="flex: 1; overflow-y: auto; padding: 0 16px 80px 16px;">
+                        <div class="card" style="text-align: center; padding: 30px 20px;">
+                            <div style="font-size: 14px; opacity: 0.9; margin-bottom: 16px;">Share your referral link with friends</div>
+                            <div id="qrCodeContainerPage" style="background: white; padding: 20px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;"></div>
+                            <div style="display: flex; gap: 12px; flex-direction: column;">
+                                <button onclick="copyReferralLink()" style="padding: 14px 20px; background: rgba(100, 200, 255, 0.6); border: 1px solid rgba(100, 200, 255, 0.8); border-radius: 8px; color: white; font-weight: 600; cursor: pointer; font-size: 14px; transition: all 0.3s;">
+                                    <span style="font-size: 18px; margin-right: 8px;">📋</span> Copy Referral Link
+                                </button>
+                                <button onclick="shareReferralLink()" style="padding: 14px 20px; background: rgba(100, 255, 200, 0.6); border: 1px solid rgba(100, 255, 200, 0.8); border-radius: 8px; color: white; font-weight: 600; cursor: pointer; font-size: 14px; transition: all 0.3s;">
+                                    <span style="font-size: 18px; margin-right: 8px;">🔗</span> Share Link
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card" style="margin-top: 16px;">
+                            <div class="card-header">
+                                <div class="card-title">How It Works</div>
+                            </div>
+                            <div style="padding: 12px 0; font-size: 13px; line-height: 1.6; opacity: 0.9;">
+                                <div style="margin-bottom: 12px;">
+                                    <div style="font-weight: 700; margin-bottom: 4px;">1. Share Your Link</div>
+                                    <div>Copy or share your unique referral link with friends</div>
+                                </div>
+                                <div style="margin-bottom: 12px;">
+                                    <div style="font-weight: 700; margin-bottom: 4px;">2. They Register</div>
+                                    <div>Friends join using your link</div>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 700; margin-bottom: 4px;">3. You Earn 6%</div>
+                                    <div>Earn 6% of every stake they place (after their first stake)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUPPORT PAGE -->
+                <div id="supportPage" class="page">
+                    <button class="back-button" onclick="showPage('homePage')" style="margin: 16px;">← Back</button>
+                    <div class="card" style="text-align: center; margin: 16px;">
+                        <div style="font-size: 24px; font-weight: 900;">Support</div>
+                    </div>
+                    <div style="flex: 1; overflow-y: auto; padding: 0 16px 80px 16px;">
+                        <!-- CUSTOMER HELPLINE -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">Customer Helpline</div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 12px; padding: 16px 0;">
+                                <a id="whatsappButton" href="#" target="_blank" style="padding: 14px 20px; background: rgba(37, 211, 102, 0.6); border: 1px solid rgba(37, 211, 102, 0.8); border-radius: 8px; color: white; font-weight: 600; cursor: pointer; font-size: 14px; text-align: center; text-decoration: none; transition: all 0.3s;">
+                                    <span style="font-size: 18px; margin-right: 8px;">💬</span> WhatsApp Support
+                                </a>
+                                <a id="emailButton" href="#" style="padding: 14px 20px; background: rgba(100, 150, 255, 0.6); border: 1px solid rgba(100, 150, 255, 0.8); border-radius: 8px; color: white; font-weight: 600; cursor: pointer; font-size: 14px; text-align: center; text-decoration: none; transition: all 0.3s;">
+                                    <span style="font-size: 18px; margin-right: 8px;">✉️</span> Email Support
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- FAQ SECTION -->
+                        <div class="card" style="margin-top: 16px;">
+                            <div class="card-header">
+                                <div class="card-title">Frequently Asked Questions</div>
+                            </div>
+                            <div style="padding: 12px 0; font-size: 13px; line-height: 1.6;">
+                                <!-- FAQ Item 1 -->
+                                <div style="border-bottom: 1px solid rgba(255,255,255,0.2); padding: 12px 0; margin-bottom: 12px;">
+                                    <div style="font-weight: 700; margin-bottom: 6px; color: rgba(100, 200, 255, 0.9);">How do I place a prediction?</div>
+                                    <div style="opacity: 0.8;">Go to the Predict tab, select a team, enter your stake amount, and confirm. Your prediction will appear in the My Picks tab.</div>
+                                </div>
+
+                                <!-- FAQ Item 2 -->
+                                <div style="border-bottom: 1px solid rgba(255,255,255,0.2); padding: 12px 0; margin-bottom: 12px;">
+                                    <div style="font-weight: 700; margin-bottom: 6px; color: rgba(100, 200, 255, 0.9);">What is the minimum stake?</div>
+                                    <div style="opacity: 0.8;">The minimum stake is UGX 6,000. The maximum stake is UGX 5,000,000 per prediction.</div>
+                                </div>
+
+                                <!-- FAQ Item 3 -->
+                                <div style="border-bottom: 1px solid rgba(255,255,255,0.2); padding: 12px 0; margin-bottom: 12px;">
+                                    <div style="font-weight: 700; margin-bottom: 6px; color: rgba(100, 200, 255, 0.9);">Can I cashout my prediction?</div>
+                                    <div style="opacity: 0.8;">Yes, you can cashout within 24 hours of placing your prediction. The refund will be your original stake minus any applicable fees.</div>
+                                </div>
+
+                                <!-- FAQ Item 4 -->
+                                <div style="border-bottom: 1px solid rgba(255,255,255,0.2); padding: 12px 0; margin-bottom: 12px;">
+                                    <div style="font-weight: 700; margin-bottom: 6px; color: rgba(100, 200, 255, 0.9);">How do deposits and withdrawals work?</div>
+                                    <div style="opacity: 0.8;">You can deposit funds via MarzPay or other available payment methods. Withdrawals are processed within 24-48 hours to your registered account.</div>
+                                </div>
+
+                                <!-- FAQ Item 5 -->
+                                <div style="border-bottom: 1px solid rgba(255,255,255,0.2); padding: 12px 0; margin-bottom: 12px;">
+                                    <div style="font-weight: 700; margin-bottom: 6px; color: rgba(100, 200, 255, 0.9);">How does the referral program work?</div>
+                                    <div style="opacity: 0.8;">Share your referral code with friends. When they register and place predictions, you earn 6% commission from their stakes.</div>
+                                </div>
+
+                                <!-- FAQ Item 6 -->
+                                <div style="padding: 12px 0;">
+                                    <div style="font-weight: 700; margin-bottom: 6px; color: rgba(100, 200, 255, 0.9);">Is my account secure?</div>
+                                    <div style="opacity: 0.8;">Yes, we use Firebase security with encrypted data storage. Your personal information is protected and never shared with third parties.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTTOM NAVIGATION -->
+            <div class="bottom-nav" id="bottomNav" style="display: none;">
+                <div class="nav-item active">
+                    <div class="nav-icon">🏠</div>
+                    <div class="nav-label">Home</div>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-icon">⚽</div>
+                    <div class="nav-label">Predict</div>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-icon">🏆</div>
+                    <div class="nav-label">Leaderboard</div>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-icon">👤</div>
+                    <div class="nav-label">Profile</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // FIREBASE CONFIGURATION
+        // ============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDjeiATGP5CKRIB8GZAA9-Iitevst8LGxs",
+            authDomain: "worldcuppredict-6a172.firebaseapp.com",
+            databaseURL: "https://worldcuppredict-6a172-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "worldcuppredict-6a172",
+            storageBucket: "worldcuppredict-6a172.firebasestorage.app",
+            messagingSenderId: "448681472329",
+            appId: "1:448681472329:web:9835b32ce8ec398ec46a98"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // Database helper functions
+        const DB = {
+            get: (path) => database.ref(path).once('value').then(s => s.val()),
+            set: (path, data) => database.ref(path).set(data),
+            update: (path, data) => database.ref(path).update(data),
+            push: (path, data) => {
+                const ref = database.ref(path).push();
+                return ref.set(data).then(() => ref.key);
+            },
+            remove: (path) => database.ref(path).remove(),
+            generateId: () => database.ref().push().key
+        };
+
+        // ============================================================
+        // All 48 World Cup teams with flags and odds
+        // ============================================================
+        const worldCupTeams = [
+            { name: 'Argentina', flag: '🇦🇷', odds: 6.0 },
+            { name: 'Australia', flag: '🇦🇺', odds: 50.0 },
+            { name: 'Austria', flag: '🇦🇹', odds: 45.0 },
+            { name: 'Belgium', flag: '🇧🇪', odds: 35.0 },
+            { name: 'Bosnia', flag: '🇧🇦', odds: 100.0 },
+            { name: 'Brazil', flag: '🇧🇷', odds: 4.0 },
+            { name: 'Canada', flag: '🇨🇦', odds: 250.0 },
+            { name: 'Cape Verde', flag: '🇨🇻', odds: 300.0 },
+            { name: 'Chile', flag: '🇨🇱', odds: 200.0 },
+            { name: 'Congo DR', flag: '🇨🇩', odds: 300.0 },
+            { name: 'Croatia', flag: '🇭🇷', odds: 25.0 },
+            { name: 'Czechia', flag: '🇨🇿', odds: 80.0 },
+            { name: 'Côte d\'Ivoire', flag: '🇨🇮', odds: 60.0 },
+            { name: 'Ecuador', flag: '🇪🇨', odds: 150.0 },
+            { name: 'Egypt', flag: '🇪🇬', odds: 100.0 },
+            { name: 'England', flag: '🇬🇧', odds: 7.0 },
+            { name: 'France', flag: '🇫🇷', odds: 5.0 },
+            { name: 'Germany', flag: '🇩🇪', odds: 8.0 },
+            { name: 'Ghana', flag: '🇬🇭', odds: 120.0 },
+            { name: 'Greece', flag: '🇬🇷', odds: 300.0 },
+            { name: 'Iran', flag: '🇮🇷', odds: 200.0 },
+            { name: 'Iraq', flag: '🇮🇶', odds: 250.0 },
+            { name: 'Japan', flag: '🇯🇵', odds: 40.0 },
+            { name: 'Jordan', flag: '🇯🇴', odds: 300.0 },
+            { name: 'Mexico', flag: '🇲🇽', odds: 30.0 },
+            { name: 'Morocco', flag: '🇲🇦', odds: 15.0 },
+            { name: 'Netherlands', flag: '🇳🇱', odds: 15.0 },
+            { name: 'New Zealand', flag: '🇳🇿', odds: 300.0 },
+            { name: 'Norway', flag: '🇳🇴', odds: 200.0 },
+            { name: 'Peru', flag: '🇵🇪', odds: 100.0 },
+            { name: 'Portugal', flag: '🇵🇹', odds: 12.0 },
+            { name: 'Qatar', flag: '🇶🇦', odds: 150.0 },
+            { name: 'Saudi Arabia', flag: '🇸🇦', odds: 300.0 },
+            { name: 'Senegal', flag: '🇸🇳', odds: 70.0 },
+            { name: 'Slovakia', flag: '🇸🇰', odds: 300.0 },
+            { name: 'South Africa', flag: '🇿🇦', odds: 90.0 },
+            { name: 'South Korea', flag: '🇰🇷', odds: 50.0 },
+            { name: 'Spain', flag: '🇪🇸', odds: 9.0 },
+            { name: 'Sweden', flag: '🇸🇪', odds: 20.0 },
+            { name: 'Switzerland', flag: '🇨🇭', odds: 22.0 },
+            { name: 'Tunisia', flag: '🇹🇳', odds: 150.0 },
+            { name: 'Turkey', flag: '🇹🇷', odds: 35.0 },
+            { name: 'United States', flag: '🇺🇸', odds: 40.0 },
+            { name: 'Uruguay', flag: '🇺🇾', odds: 18.0 },
+            { name: 'Uzbekistan', flag: '🇺🇿', odds: 200.0 },
+        ];
+
+        // ============================================================
+        // STATE
+        // ============================================================
+        let selectedTeam = null;
+        let currentUser = null;
+        let currentUserData = null;
+        const APP_DOMAIN = window.location.origin + (window.location.pathname.includes('worldcuppredict') ? '/worldcuppredict/' : '/');
+
+        // ============================================================
+        // SESSION PERSISTENCE
+        // ============================================================
+        function saveSessionToStorage(user, userData) {
+            // Save to Firebase instead of localStorage
+            currentUser = user;
+            currentUserData = userData;
+        }
+
+        function listenToUserDataChanges(userId) {
+            // Listen to real-time changes for current user
+            const db = firebase.database();
+            db.ref('users/' + userId).on('value', (snapshot) => {
+                const userData = snapshot.val();
+                if (userData) {
+                    currentUserData = userData;
+                    saveSessionToStorage(currentUser, userData);
+                    updateUI();
+                    updateProfilePage();
+                    console.log('User data updated from Firebase');
+                }
+            });
+        }
+
+        function restoreSessionFromStorage() {
+            // Session restored from Firebase auth state, not localStorage
+            return currentUser && currentUserData;
+        }
+
+        function clearSessionFromStorage() {
+            // Clear from Firebase auth and memory
+            currentUser = null;
+            currentUserData = null;
+        }
+
+        // ============================================================
+        // MARZPAY CONFIGURATION
+        // ============================================================
+        const MARZ_API = 'https://polished-truth-f9c5.vallazvallax.workers.dev';
+        const DEPOSIT_FEE_PERCENT = 2;
+        const MIN_DEPOSIT = 1000;
+        const MAX_DEPOSIT = 5000000;
+
+        function getMarzAuth() {
+            // This will be called with settings from Firebase
+            // For now, return a placeholder - will be updated when settings are loaded
+            return window.currentSettings?.marzApiKey ? 'Basic ' + window.currentSettings.marzApiKey.replace(/^Basic\s+/i, '') : '';
+        }
+
+        async function loadSettingsFromFirebase() {
+            return new Promise((resolve) => {
+                DB.get('settings').then(settings => {
+                    window.currentSettings = settings || {};
+                    resolve(settings);
+                }).catch(error => {
+                    console.error('Error loading settings:', error);
+                    window.currentSettings = {};
+                    resolve({});
+                });
+            });
+        }
+
+        function listenToSettingsChanges() {
+            // Listen to real-time changes from Firebase
+            const db = firebase.database();
+            db.ref('settings').on('value', (snapshot) => {
+                window.currentSettings = snapshot.val() || {};
+                console.log('Settings updated from Firebase:', window.currentSettings);
+            });
+        }
+
+        // Load settings on app start
+        function initializeSettings() {
+            loadSettingsFromFirebase().then(() => {
+                listenToSettingsChanges();
+            });
+        }
+
+        async function marzCollect(phone, amount, reference, description) {
+            const formData = new FormData();
+            formData.append('phone_number', phone);
+            formData.append('amount', String(amount));
+            formData.append('country', 'UG');
+            formData.append('reference', reference);
+            formData.append('description', description);
+
+            try {
+                const response = await fetch(MARZ_API + '/collect-money', {
+                    method: 'POST',
+                    headers: { 'Authorization': getMarzAuth() },
+                    body: formData
+                });
+                return await response.json();
+            } catch (error) {
+                showToast('Error', 'Network error: ' + error.message, 'error');
+                return { status: 'failed', error: error.message };
+            }
+        }
+
+        async function marzCheckStatus(uuid) {
+            try {
+                const response = await fetch(MARZ_API + '/transactions', {
+                    method: 'POST',
+                    headers: { 'Authorization': getMarzAuth() },
+                    body: JSON.stringify({ uuid: uuid })
+                });
+                return await response.json();
+            } catch (error) {
+                return { transaction: { status: 'error' } };
+            }
+        }
+
+        async function pollPaymentStatus(uuid, maxAttempts = 120, intervalMs = 5000) {
+            for (let i = 0; i < maxAttempts; i++) {
+                await new Promise(r => setTimeout(r, intervalMs));
+                const result = await marzCheckStatus(uuid);
+                const status = result?.transaction?.status?.toLowerCase();
+                if (status === 'completed' || status === 'successful') return 'success';
+                if (status === 'failed' || status === 'cancelled') return 'failed';
+            }
+            return 'timeout';
+        }
+
+        // ============================================================
+        // DEPOSIT STATE & UI
+        // ============================================================
+        let depositState = {
+            isProcessing: false,
+            pollTimer: null,
+            pollCount: 0
+        };
+
+        function formatPhoneNumber(phone) {
+            // Remove any spaces or dashes
+            phone = phone.replace(/[\s\-]/g, '');
+            // If starts with 0, replace with +256
+            if (phone.startsWith('0')) {
+                return '+256' + phone.substring(1);
+            }
+            // If already has +256, return as is
+            if (phone.startsWith('+256')) {
+                return phone;
+            }
+            // Otherwise add +256
+            return '+256' + phone;
+        }
+
+        function validatePhoneNumber(phone) {
+            phone = phone.replace(/[\s\-]/g, '');
+            if (phone.startsWith('0')) phone = phone.substring(1);
+            if (phone.startsWith('256')) phone = phone.substring(3);
+            return phone.length === 9 && /^\d+$/.test(phone);
+        }
+
+        function showPopup(title, message, icon = '✓', type = 'success', buttons = null) {
+            const overlay = document.getElementById('popupOverlay');
+            document.getElementById('popupIcon').textContent = icon;
+            document.getElementById('popupTitle').textContent = title;
+            document.getElementById('popupMessage').textContent = message;
+
+            const buttonsContainer = document.getElementById('popupButtons');
+            if (buttons) {
+                buttonsContainer.innerHTML = buttons;
+            } else {
+                buttonsContainer.innerHTML = '<button class="popup-btn popup-btn-primary" onclick="closePopup()">OK</button>';
+            }
+
+            overlay.classList.add('show');
+        }
+
+        function closePopup() {
+            document.getElementById('popupOverlay').classList.remove('show');
+        }
+
+        function showInputModal(title, message, callback) {
+            document.getElementById('inputTitle').textContent = title;
+            document.getElementById('inputMessage').textContent = message;
+            document.getElementById('inputAmount').value = '';
+            document.getElementById('inputAmount').focus();
+
+            window.inputCallback = callback;
+            document.getElementById('inputModal').classList.add('show');
+        }
+
+        function closeInputModal() {
+            document.getElementById('inputModal').classList.remove('show');
+        }
+
+        function confirmInput() {
+            const amount = document.getElementById('inputAmount').value;
+            closeInputModal();
+            if (window.inputCallback) {
+                window.inputCallback(amount);
+            }
+        }
+
+        function showConfirmDialog(title, message, onConfirm, onCancel = null) {
+            document.getElementById('popupIcon').textContent = '❓';
+            document.getElementById('popupTitle').textContent = title;
+            document.getElementById('popupMessage').textContent = message;
+
+            const buttonsHTML = `
+                <button class="popup-btn popup-btn-danger" onclick="executeConfirm()">Confirm</button>
+                <button class="popup-btn popup-btn-secondary" onclick="closePopup()">Cancel</button>
+            `;
+            document.getElementById('popupButtons').innerHTML = buttonsHTML;
+
+            window.confirmCallback = onConfirm;
+            window.cancelCallback = onCancel;
+            document.getElementById('popupOverlay').classList.add('show');
+        }
+
+        function executeConfirm() {
+            closePopup();
+            if (window.confirmCallback) {
+                window.confirmCallback();
+            }
+        }
+
+        function showToast(title, message, type = 'success', duration = 4000) {
+            const container = document.getElementById('toastContainer');
+            const icons = {
+                success: '✓',
+                error: '✕',
+                warning: '⚠',
+                info: 'ℹ'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <span class="toast-icon">${icons[type]}</span>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'toastSlideIn 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
+        function showConfirmPopup(title, message, onConfirm, onCancel = null) {
+            const buttons = `
+                <button class="popup-btn popup-btn-danger" onclick="closePopup(); (${onConfirm.toString()})()">Confirm</button>
+                <button class="popup-btn popup-btn-secondary" onclick="closePopup(); ${onCancel ? `(${onCancel.toString()})()` : ''}">Cancel</button>
+            `;
+            showPopup(title, message, '❓', 'warning', buttons);
+        }
+
+        function confirm_logout() {
+            showConfirmDialog('Logout', 'Are you sure you want to logout?', function() {
+                auth.signOut().then(() => {
+                    clearSessionFromStorage();
+                    showAuth();
+                    document.getElementById('bottomNav').style.display = 'none';
+                });
+            });
+            return true;
+        }
+
+        // ============================================================
+        // INITIALIZATION
+        // ============================================================
+        window.addEventListener('load', function() {
+            initializeFlags();
+            loadTeamsFromFirebase();
+            setupNavigation();
+            checkAuth();
+        });
+
+        function loadTeamsFromFirebase() {
+            DB.get('teams').then(data => {
+                if (data) {
+                    // Teams already exist in Firebase
+                    populateTeams();
+                } else {
+                    // Seed default teams
+                    DB.set('teams', worldCupTeams).then(() => {
+                        populateTeams();
+                    });
+                }
+            }).catch(() => {
+                populateTeams();
+            });
+        }
+
+        // ============================================================
+        // AUTHENTICATION
+        // ============================================================
+        function checkAuth() {
+            // Initialize settings from Firebase
+            initializeSettings();
+
+            // Check Firebase auth state
+            auth.onAuthStateChanged(function(user) {
+                if (user) {
+                    DB.get('users/' + user.uid).then(data => {
+                        if (data) {
+                            currentUser = user;
+                            currentUserData = data;
+                            listenToUserDataChanges(user.uid);
+                            showApp();
+                        } else {
+                            auth.signOut();
+                            clearSessionFromStorage();
+                            showAuth();
+                        }
+                    }).catch(() => {
+                        showAuth();
+                    });
+                } else {
+                    showAuth();
+                }
+            });
+        }
+
+        function showAuth() {
+            document.getElementById('loginPage').classList.add('active');
+            document.getElementById('registerPage').classList.remove('active');
+            document.getElementById('homePage').classList.remove('active');
+            document.getElementById('predictPage').classList.remove('active');
+            document.getElementById('leaderboardPage').classList.remove('active');
+            document.getElementById('profilePage').classList.remove('active');
+            document.getElementById('companyPage').classList.remove('active');
+            document.getElementById('myPicksPage').classList.remove('active');
+            document.getElementById('pendingPage').classList.remove('active');
+            document.getElementById('winPage').classList.remove('active');
+            document.getElementById('lostPage').classList.remove('active');
+            document.getElementById('cancelledPage').classList.remove('active');
+            document.getElementById('stakePage').classList.remove('active');
+            document.getElementById('bottomNav').style.display = 'none';
+        }
+
+        function showApp() {
+            document.getElementById('loginPage').classList.remove('active');
+            document.getElementById('registerPage').classList.remove('active');
+            document.getElementById('homePage').classList.add('active');
+            document.getElementById('bottomNav').style.display = 'flex';
+            updateUI();
+            setTimeout(() => updateProfilePage(), 100);
+        }
+
+        function switchAuth(mode) {
+            document.getElementById('loginError').classList.remove('show');
+            document.getElementById('loginSuccess').classList.remove('show');
+            document.getElementById('registerError').classList.remove('show');
+            document.getElementById('registerSuccess').classList.remove('show');
+
+            if (mode === 'login') {
+                document.getElementById('loginPage').classList.add('active');
+                document.getElementById('registerPage').classList.remove('active');
+            } else {
+                document.getElementById('registerPage').classList.add('active');
+                document.getElementById('loginPage').classList.remove('active');
+            }
+        }
+
+        // ============================================================
+        // REGISTRATION
+        // ============================================================
+        function handleRegister() {
+            const name = document.getElementById('registerName').value.trim();
+            const country = document.getElementById('registerCountry').value;
+            const phone = document.getElementById('registerPhone').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const referral = document.getElementById('registerReferral').value.trim();
+            const password = document.getElementById('registerPassword').value.trim();
+            const confirmPassword = document.getElementById('registerConfirmPassword').value.trim();
+            const terms = document.getElementById('registerTerms').checked;
+
+            document.getElementById('registerError').classList.remove('show');
+            document.getElementById('registerSuccess').classList.remove('show');
+
+            if (!name || name.length < 2) {
+                showRegisterError('Please enter your full name (min 2 characters)');
+                return;
+            }
+
+            if (!phone || phone.length < 8) {
+                showRegisterError('Please enter a valid phone number');
+                return;
+            }
+
+            if (!email || !email.includes('@') || !email.includes('.')) {
+                showRegisterError('Please enter a valid email address');
+                return;
+            }
+
+            if (!password || password.length < 4) {
+                showRegisterError('Password must be at least 4 characters');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showRegisterError('Passwords do not match');
+                return;
+            }
+
+            if (!terms) {
+                showRegisterError('Please agree to the Terms and Conditions');
+                return;
+            }
+
+            // Check if phone already registered
+            DB.get('users').then(users => {
+                if (users) {
+                    const userList = Object.values(users);
+                    if (userList.find(u => u.phone === phone)) {
+                        showRegisterError('This phone number is already registered. Please login.');
+                        return;
+                    }
+                }
+
+                auth.createUserWithEmailAndPassword(email, password)
+                    .then(userCredential => {
+                        const user = userCredential.user;
+                        const newUserData = {
+                            name: name,
+                            country: country,
+                            phone: phone,
+                            email: email,
+                            referralCode: referral || 'WORLDCUP2026',
+                            balance: 1000,
+                            totalStaked: 0,
+                            totalWon: 0,
+                            predictions: {},
+                            transactions: {},
+                            registeredDate: new Date().toISOString(),
+                            referrals: 0,
+                            referralEarnings: 0
+                        };
+
+                        return DB.set('users/' + user.uid, newUserData).then(() => {
+                            const txId = DB.generateId();
+                            return DB.set('transactions/' + txId, {
+                                userId: user.uid,
+                                userName: name,
+                                type: 'deposit',
+                                amount: 1000,
+                                date: new Date().toISOString(),
+                                description: 'Welcome Bonus'
+                            }).then(() => {
+                                currentUser = user;
+                                currentUserData = newUserData;
+                                saveSessionToStorage(user, newUserData);
+                                document.getElementById('registerSuccess').textContent = '🎉 Registration successful! Welcome ' +
+                                    name + '!';
+                                document.getElementById('registerSuccess').classList.add('show');
+                                setTimeout(() => showApp(), 1500);
+                            });
+                        });
+                    })
+                    .catch(error => {
+                        showRegisterError(error.message);
+                    });
+            });
+        }
+
+        function showRegisterError(message) {
+            const errorEl = document.getElementById('registerError');
+            errorEl.textContent = '❌ ' + message;
+            errorEl.classList.add('show');
+        }
+
+        // ============================================================
+        // LOGIN
+        // ============================================================
+        function handleLogin() {
+            const phone = document.getElementById('loginPhone').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            document.getElementById('loginError').classList.remove('show');
+            document.getElementById('loginSuccess').classList.remove('show');
+
+            if (!phone || !password) {
+                document.getElementById('loginError').textContent = '❌ Please enter both phone number and password';
+                document.getElementById('loginError').classList.add('show');
+                return;
+            }
+
+            DB.get('users').then(users => {
+                if (!users) {
+                    document.getElementById('loginError').textContent = '❌ User not found';
+                    document.getElementById('loginError').classList.add('show');
+                    return;
+                }
+
+                const userList = Object.values(users);
+                const foundUser = userList.find(u => u.phone === phone);
+
+                if (!foundUser) {
+                    document.getElementById('loginError').textContent = '❌ User not found with this phone number';
+                    document.getElementById('loginError').classList.add('show');
+                    return;
+                }
+
+                let userId = null;
+                const userEntries = Object.entries(users);
+                for (let [key, value] of userEntries) {
+                    if (value.phone === phone) {
+                        userId = key;
+                        break;
+                    }
+                }
+
+                auth.signInWithEmailAndPassword(foundUser.email, password)
+                    .then(userCredential => {
+                        currentUser = userCredential.user;
+                        currentUserData = foundUser;
+                        saveSessionToStorage(userCredential.user, foundUser);
+                        document.getElementById('loginSuccess').textContent = '✅ Welcome back, ' + foundUser.name + '!';
+                        document.getElementById('loginSuccess').classList.add('show');
+                        setTimeout(() => showApp(), 1000);
+                    })
+                    .catch(error => {
+                        document.getElementById('loginError').textContent = '❌ ' + error.message;
+                        document.getElementById('loginError').classList.add('show');
+                    });
+            });
+        }
+
+        // ============================================================
+        // UPDATE UI
+        // ============================================================
+        function updateUI() {
+            if (!currentUserData) return;
+
+            document.getElementById('userBalance').textContent = 'UGX ' + (currentUserData.balance || 0).toLocaleString();
+
+            const predictions = currentUserData.predictions ? Object.values(currentUserData.predictions) : [];
+            const totalPreds = predictions.length;
+            document.getElementById('totalPredictions').textContent = totalPreds;
+
+            let correctPreds = 0;
+            predictions.forEach(pred => {
+                if (pred.status === 'won') correctPreds++;
+            });
+
+            const winRate = totalPreds > 0 ? Math.round((correctPreds / totalPreds) * 100) : 0;
+            document.getElementById('winRate').textContent = winRate + '%';
+            document.getElementById('correctPredictions').textContent = correctPreds;
+            document.getElementById('totalWinnings').textContent = 'UGX ' + (currentUserData.totalWon || 0).toLocaleString();
+
+            updateRecentTransactions();
+        }
+
+        function updateRecentTransactions() {
+            const transactionsList = document.getElementById('transactionsList');
+            const txs = currentUserData.transactions ? Object.values(currentUserData.transactions) : [];
+            const recent = txs.slice(-3).reverse();
+
+            if (recent.length === 0) {
+                transactionsList.innerHTML = `
+                    <div class="match-item">
+                        <div class="match-time">Today</div>
+                        <div class="match-teams">No transactions yet</div>
+                        <div class="match-flag" style="color: #4caf50;">💼</div>
+                    </div>
+                `;
+                return;
+            }
+
+            transactionsList.innerHTML = recent.map(tx => {
+                const date = new Date(tx.date).toLocaleDateString();
+                const icon = tx.type === 'deposit' ? '💰' : tx.type === 'stake' ? '⚽' : tx.type === 'winnings' ? '🏆' : '💳';
+                return `
+                    <div class="match-item">
+                        <div class="match-time">${date}</div>
+                        <div class="match-teams">${tx.type.toUpperCase()} - ${tx.description || ''}</div>
+                        <div class="match-flag">${icon}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================================
+        // TEAMS
+        // ============================================================
+        function populateTeams() {
+            const teamGrid = document.getElementById('teamGrid');
+            teamGrid.innerHTML = '';
+
+            DB.get('teams').then(teams => {
+                const teamList = teams || worldCupTeams;
+                teamList.forEach((team) => {
+                    const teamCard = document.createElement('div');
+                    teamCard.className = 'team-card';
+                    teamCard.innerHTML = `
+                        <div class="team-flag">${team.flag}</div>
+                        <div class="team-name">${team.name}</div>
+                        <div style="font-size: 10px; opacity: 0.8;">Odds: ${team.odds.toFixed(2)}</div>
+                    `;
+                    teamCard.onclick = () => selectTeam(team);
+                    teamGrid.appendChild(teamCard);
+                });
+            }).catch(() => {
+                worldCupTeams.forEach((team) => {
+                    const teamCard = document.createElement('div');
+                    teamCard.className = 'team-card';
+                    teamCard.innerHTML = `
+                        <div class="team-flag">${team.flag}</div>
+                        <div class="team-name">${team.name}</div>
+                        <div style="font-size: 10px; opacity: 0.8;">Odds: ${team.odds.toFixed(2)}</div>
+                    `;
+                    teamCard.onclick = () => selectTeam(team);
+                    teamGrid.appendChild(teamCard);
+                });
+            });
+        }
+
+        function initializeFlags() {
+            const container = document.querySelector('.flags-container');
+            if (!container) return;
+
+            DB.get('teams').then(teams => {
+                const teamList = teams || worldCupTeams;
+                let flagsHTML = '';
+                teamList.forEach(team => {
+                    flagsHTML += `<div class="flag-item">${team.flag}</div>`;
+                });
+                container.innerHTML = flagsHTML + flagsHTML;
+            }).catch(() => {
+                let flagsHTML = '';
+                worldCupTeams.forEach(team => {
+                    flagsHTML += `<div class="flag-item">${team.flag}</div>`;
+                });
+                container.innerHTML = flagsHTML + flagsHTML;
+            });
+        }
+
+        // ============================================================
+        // PREDICTIONS
+        // ============================================================
+        function selectTeam(team) {
+            selectedTeam = team;
+            document.getElementById('selectedTeamFlag').textContent = team.flag;
+            document.getElementById('selectedTeamName').textContent = team.name;
+            document.getElementById('selectedTeamOdds').textContent = team.odds.toFixed(2);
+
+            document.getElementById('stakeAmount').value = 6000;
+            updateStakeDisplay();
+
+            showPage('stakePage');
+        }
+
+        function updateStakeDisplay() {
+            const stakeAmount = parseInt(document.getElementById('stakeAmount').value) || 6000;
+            const potentialWin = stakeAmount * selectedTeam.odds;
+
+            document.getElementById('displayStake').textContent = 'UGX ' + stakeAmount.toLocaleString();
+            document.getElementById('displayPotentialWin').textContent = 'UGX ' + Math.round(potentialWin).toLocaleString();
+        }
+
+        function confirmPrediction() {
+            if (!currentUser || !currentUserData) {
+
+                return;
+            }
+
+            const stakeAmount = parseInt(document.getElementById('stakeAmount').value) || 6000;
+
+            if (stakeAmount < 6000) {
+
+                return;
+            }
+
+            if (stakeAmount > 5000000) {
+
+                return;
+            }
+
+            if (currentUserData.balance < stakeAmount) {
+
+                return;
+            }
+
+            currentUserData.balance -= stakeAmount;
+
+            const predId = DB.generateId();
+            const prediction = {
+                country: selectedTeam.name,
+                flag: selectedTeam.flag,
+                odds: selectedTeam.odds,
+                stake: stakeAmount,
+                status: 'active',
+                date: new Date().toISOString(),
+                stakedTime: new Date().getTime()
+            };
+
+            if (!currentUserData.predictions) {
+                currentUserData.predictions = {};
+            }
+            currentUserData.predictions[predId] = prediction;
+
+            const txId = DB.generateId();
+            const transaction = {
+                userId: currentUser.uid,
+                userName: currentUserData.name,
+                type: 'stake',
+                amount: stakeAmount,
+                date: new Date().toISOString(),
+                description: 'Stake on ' + selectedTeam.name
+            };
+
+            Promise.all([
+                DB.set('users/' + currentUser.uid, currentUserData),
+                DB.set('predictions/' + predId, {
+                    ...prediction,
+                    userId: currentUser.uid,
+                    userName: currentUserData.name
+                }),
+                DB.set('transactions/' + txId, transaction)
+            ]).then(() => {
+                updateUI();
+
+                showPage('homePage');
+            }).catch(error => {
+
+            });
+        }
+
+        // ============================================================
+        // CASHOUT
+        // ============================================================
+        function cashoutPrediction(predictionId) {
+            if (!currentUser || !currentUserData) {
+                showToast('Error', 'Please login first', 'error');
+                return;
+            }
+
+            const prediction = currentUserData.predictions ? currentUserData.predictions[predictionId] : null;
+
+            if (!prediction) {
+                showToast('Error', 'Prediction not found', 'error');
+                return;
+            }
+
+            const currentTime = new Date().getTime();
+            const timeSinceStaked = currentTime - prediction.stakedTime;
+            if (timeSinceStaked >= 86400000) {
+                showToast('Error', 'Cashout period (24 hours) has expired', 'error');
+                return;
+            }
+
+            // OPTIMISTIC UPDATE - Update UI immediately
+            const originalBalance = currentUserData.balance;
+            const originalStatus = prediction.status;
+
+            currentUserData.balance += prediction.stake;
+            prediction.status = 'cancelled';
+
+            updateUI();
+            populateTabPage('myPicksPage');
+
+            // Save to Firebase in background
+            const txId = DB.generateId();
+            const transaction = {
+                userId: currentUser.uid,
+                userName: currentUserData.name,
+                type: 'withdrawal',
+                amount: prediction.stake,
+                date: new Date().toISOString(),
+                description: 'Cashout - ' + prediction.country
+            };
+
+            Promise.all([
+                DB.set('users/' + currentUser.uid, currentUserData),
+                DB.set('transactions/' + txId, transaction)
+            ]).then(() => {
+                // Success - data is saved
+            }).catch(error => {
+                // Rollback on error
+                currentUserData.balance = originalBalance;
+                prediction.status = originalStatus;
+                updateUI();
+                populateTabPage('myPicksPage');
+                showToast('Error', 'Cashout failed. Please try again.', 'error');
+            });
+        }
+
+        // ============================================================
+        // NAVIGATION
+        // ============================================================
+        function goToPredict() {
+            showPage('predictPage');
+        }
+
+        function backToTeamSelection() {
+            showPage('predictPage');
+        }
+
+        function showPage(pageName) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            const page = document.getElementById(pageName);
+            if (page) {
+                page.classList.add('active');
+                if (pageName === 'callInPage') {
+                    setTimeout(() => generateReferralQR(), 50);
+                }
+                if (pageName === 'supportPage') {
+                    setTimeout(() => loadSupportSettings(), 50);
+                }
+            }
+        }
+
+        function loadSupportSettings() {
+            DB.get('settings').then(settings => {
+                if (settings) {
+                    const whatsappLink = settings.whatsappLink || '';
+                    const supportEmail = settings.supportEmail || 'support@worldcuppredict.app';
+
+                    const whatsappButton = document.getElementById('whatsappButton');
+                    const emailButton = document.getElementById('emailButton');
+
+                    if (whatsappLink) {
+                        whatsappButton.href = whatsappLink;
+                        whatsappButton.style.display = 'block';
+                    } else {
+                        whatsappButton.style.display = 'none';
+                    }
+
+                    emailButton.href = 'mailto:' + supportEmail + '?subject=WorldCupPredict Support Request&body=Hello, I need help with...';
+                }
+            });
+        }
+
+        function switchTab(button, tabName) {
+            let pageName = '';
+
+            if (tabName === 'myPicksTab') {
+                pageName = 'myPicksPage';
+                populateTabPage(pageName);
+                showPage(pageName);
+            } else if (tabName === 'pendingTab') {
+                pageName = 'pendingPage';
+                populateTabPage(pageName);
+                showPage(pageName);
+            } else if (tabName === 'winTab') {
+                pageName = 'winPage';
+                populateTabPage(pageName);
+                showPage(pageName);
+            } else if (tabName === 'lostTab') {
+                pageName = 'lostPage';
+                populateTabPage(pageName);
+                showPage(pageName);
+            } else if (tabName === 'cancelledTab') {
+                pageName = 'cancelledPage';
+                populateTabPage(pageName);
+                showPage(pageName);
+            } else if (tabName === 'companyTab') {
+                pageName = 'companyPage';
+                showPage(pageName);
+            }
+        }
+
+        // ============================================================
+        // TAB PAGES
+        // ============================================================
+        function populateTabPage(pageName) {
+            if (!currentUserData) return;
+
+            const predictions = currentUserData.predictions ? Object.values(currentUserData.predictions) : [];
+
+            let filteredPredictions = [];
+            let emptyMsg = '';
+
+            if (pageName === 'myPicksPage') {
+                filteredPredictions = predictions.filter(p => p.status === 'active');
+                emptyMsg = 'No active predictions';
+            } else if (pageName === 'pendingPage') {
+                filteredPredictions = predictions.filter(p => p.status === 'active');
+                emptyMsg = 'No staked predictions';
+            } else if (pageName === 'winPage') {
+                filteredPredictions = predictions.filter(p => p.status === 'won');
+                emptyMsg = 'No winning predictions yet';
+            } else if (pageName === 'lostPage') {
+                filteredPredictions = predictions.filter(p => p.status === 'lost');
+                emptyMsg = 'No losing predictions yet';
+            } else if (pageName === 'cancelledPage') {
+                filteredPredictions = predictions.filter(p => p.status === 'cancelled');
+                emptyMsg = 'No cashed out predictions yet';
+            }
+
+            setTimeout(() => {
+                const pageContent = document.querySelector(`#${pageName} .tab-page-content`);
+                if (!pageContent) return;
+
+                if (filteredPredictions.length === 0) {
+                    pageContent.innerHTML = `<div class="empty-message">${emptyMsg}</div>`;
+                    return;
+                }
+
+                let html = '';
+                filteredPredictions.forEach((pred) => {
+                    const potentialWin = pred.stake * pred.odds;
+                    const tax = Math.round(potentialWin * 0.03);
+                    const totalReturn = potentialWin - tax;
+                    const winProb = Math.round((1 / pred.odds) * 100);
+
+                    const currentTime = new Date().getTime();
+                    const timeSinceStaked = currentTime - pred.stakedTime;
+                    const cashoutAvailable = timeSinceStaked < 86400000;
+
+                    let predId = null;
+                    if (currentUserData.predictions) {
+                        const entries = Object.entries(currentUserData.predictions);
+                        for (let [key, value] of entries) {
+                            if (value === pred) {
+                                predId = key;
+                                break;
+                            }
+                        }
+                    }
+
+                    let cashoutButton = '';
+                    if (pageName === 'myPicksPage' || pageName === 'pendingPage') {
+                        if (cashoutAvailable && predId) {
+                            cashoutButton =
+                                `<button onclick="cashoutPrediction('${predId}')" style="width: 100%; padding: 8px; margin-top: 8px; background: rgba(100, 200, 255, 0.8); color: white; border: none; border-radius: 4px; font-weight: 700; font-size: 12px; cursor: pointer;">Cashout Now</button>`;
+                        } else {
+                            cashoutButton =
+                                `<button disabled style="width: 100%; padding: 8px; margin-top: 8px; background: rgba(150, 150, 150, 0.5); color: white; border: none; border-radius: 4px; font-weight: 700; font-size: 12px; cursor: not-allowed;">Cashout Unavailable</button>`;
+                        }
+                    }
+
+                    html += `
+                        <div class="card" style="margin-bottom: 8px; padding: 8px;">
+                            <div style="display: flex; gap: 8px; align-items: flex-start;">
+                                <div style="display: flex; flex-direction: column; gap: 4px; min-width: 100px;">
+                                    <div style="font-size: 9px; opacity: 0.7; text-transform: uppercase;">Stake</div>
+                                    <div style="font-weight: 900; background: rgba(100, 150, 255, 0.8); color: white; padding: 5px; border-radius: 4px; font-size: 12px;">UGX ${pred.stake.toLocaleString()}</div>
+                                    <div style="font-size: 9px; opacity: 0.7; text-transform: uppercase;">Tax</div>
+                                    <div style="font-weight: 900; color: white; background: rgba(255, 100, 100, 0.8); padding: 5px; border-radius: 4px; font-size: 12px;">UGX ${tax.toLocaleString()}</div>
+                                    <div style="font-size: 9px; opacity: 0.7; text-transform: uppercase;">Return</div>
+                                    <div style="font-weight: 900; color: white; background: rgba(100, 255, 150, 0.8); padding: 5px; border-radius: 4px; font-size: 12px;">UGX ${Math.round(totalReturn).toLocaleString()}</div>
+                                </div>
+                                
+                                <div style="flex: 1;">
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <div style="font-size: 28px;">${pred.flag}</div>
+                                        <div>
+                                            <div style="font-size: 13px; font-weight: 700;">${pred.country}</div>
+                                            <div style="font-size: 11px; opacity: 0.8;">Odds: ${pred.odds.toFixed(2)} | Win: ${winProb}%</div>
+                                        </div>
+                                    </div>
+                                    ${cashoutButton}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                pageContent.innerHTML = html;
+            }, 100);
+        }
+
+        // ============================================================
+        // PROFILE
+        // ============================================================
+        function updateProfilePage() {
+            if (!currentUserData) return;
+
+            const phone = currentUserData.phone || '';
+            const maskedPhone = phone.length > 7 ? phone.substring(0, 4) + '****' + phone.substring(phone.length - 3) : phone;
+
+            setTimeout(() => {
+                document.getElementById('profileUsername').textContent = currentUserData.name || '-';
+                document.getElementById('profilePhoneMasked').textContent = maskedPhone || '-';
+                document.getElementById('profileEmail').textContent = currentUserData.email || '-';
+                document.getElementById('profileCountry').textContent = currentUserData.country || '-';
+
+                const regDate = currentUserData.registeredDate ? new Date(currentUserData.registeredDate) : new Date();
+                document.getElementById('profileRegistered').textContent = regDate.toLocaleDateString();
+
+                const today = new Date();
+                const daysDiff = Math.floor((today - regDate) / (1000 * 60 * 60 * 24));
+                document.getElementById('profileMemberSince').textContent = daysDiff + ' days';
+
+                const predictions = currentUserData.predictions ? Object.values(currentUserData.predictions) : [];
+                const totalPreds = predictions.length;
+                const correctPreds = predictions.filter(p => p.status === 'won').length;
+                const winRate = totalPreds > 0 ? Math.round((correctPreds / totalPreds) * 100) : 0;
+
+                document.getElementById('profilePredictions').textContent = totalPreds;
+                document.getElementById('profileWinRate').textContent = winRate + '%';
+                document.getElementById('profileWinnings').textContent = 'UGX ' + (currentUserData.totalWon || 0)
+                .toLocaleString();
+                document.getElementById('profileBalance').textContent = 'UGX ' + (currentUserData.balance || 0)
+                    .toLocaleString();
+
+                const refCode = 'REF' + (currentUserData.phone || '').slice(-6).toUpperCase();
+                document.getElementById('referralCode').textContent = refCode;
+                document.getElementById('referralCount').textContent = currentUserData.referrals || 0;
+                document.getElementById('referralEarnings').textContent = 'UGX ' + (currentUserData.referralEarnings || 0)
+                    .toLocaleString();
+
+                updateRecentActivity();
+            }, 50);
+        }
+
+        function updateRecentActivity() {
+            const txs = currentUserData.transactions ? Object.values(currentUserData.transactions) : [];
+            const recentTxns = txs.slice(-5).reverse();
+
+            let html = '';
+            if (recentTxns.length === 0) {
+                html = '<div style="opacity: 0.7;">No recent transactions</div>';
+            } else {
+                recentTxns.forEach(txn => {
+                    const date = new Date(txn.date).toLocaleDateString();
+                    const type = txn.type.toUpperCase();
+                    const color = txn.type === 'deposit' ? 'rgba(100, 255, 150, 0.6)' : txn.type === 'winnings' ?
+                        'rgba(100, 255, 200, 0.6)' : 'rgba(255, 150, 100, 0.6)';
+                    html += `
+                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <div>
+                                <div style="font-weight: 700;">${type}</div>
+                                <div style="font-size: 11px; opacity: 0.7;">${date}</div>
+                            </div>
+                            <div style="background: ${color}; padding: 4px 8px; border-radius: 4px; font-weight: 700;">UGX ${txn.amount.toLocaleString()}</div>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('recentActivity').innerHTML = html;
+        }
+
+        // ============================================================
+        // CHANGE PASSWORD
+        // ============================================================
+        function changePassword() {
+            if (!currentUser) {
+
+                return;
+            }
+
+            const oldPass = document.getElementById('oldPassword').value.trim();
+            const newPass = document.getElementById('newPassword').value.trim();
+            const confirmPass = document.getElementById('confirmPassword').value.trim();
+            const phone = document.getElementById('changePhoneNumber').value.trim();
+
+            if (!oldPass || !newPass || !confirmPass || !phone) {
+
+                return;
+            }
+
+            if (newPass !== confirmPass) {
+
+                return;
+            }
+
+            if (newPass.length < 4) {
+
+                return;
+            }
+
+            const credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, oldPass);
+            currentUser.reauthenticateWithCredential(credential)
+                .then(() => {
+                    return currentUser.updatePassword(newPass);
+                })
+                .then(() => {
+                    currentUserData.phone = phone;
+                    return DB.set('users/' + currentUser.uid, currentUserData);
+                })
+                .then(() => {
+                    document.getElementById('oldPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
+                    document.getElementById('changePhoneNumber').value = '';
+
+                    updateProfilePage();
+                })
+                .catch(error => {
+
+                });
+        }
+
+        // ============================================================
+        // LOGOUT
+        // ============================================================
+        function logout() {
+            showConfirmDialog('Logout', 'Are you sure you want to logout?', function() {
+                auth.signOut().then(() => {
+                    clearSessionFromStorage();
+                    showAuth();
+                    document.getElementById('bottomNav').style.display = 'none';
+                });
+            });
+        }
+
+        // ============================================================
+        // DEPOSIT / WITHDRAW - MARZPAY INTEGRATION
+        // ============================================================
+        function depositFunds() {
+            if (depositState.isProcessing) {
+                showToast('Error', 'Deposit already in progress', 'error');
+                return;
+            }
+
+            // Step 1: Show phone number input modal
+            showDepositPhoneModal();
+        }
+
+        function showDepositPhoneModal() {
+            document.getElementById('inputTitle').textContent = 'Enter Phone Number';
+            document.getElementById('inputMessage').textContent = 'Enter your Uganda phone number (e.g., 0712345678)';
+            document.getElementById('inputAmount').type = 'tel';
+            document.getElementById('inputAmount').placeholder = '0712345678';
+            document.getElementById('inputAmount').value = '';
+            document.getElementById('inputAmount').focus();
+
+            window.inputCallback = function(phone) {
+                if (!validatePhoneNumber(phone)) {
+                    showToast('Error', 'Invalid phone number. Use format: 0712345678', 'error');
+                    return;
+                }
+                showDepositAmountModal(phone);
+            };
+
+            document.getElementById('inputModal').classList.add('show');
+        }
+
+        function showDepositAmountModal(phone) {
+            document.getElementById('inputTitle').textContent = 'Enter Amount';
+            document.getElementById('inputMessage').textContent = 'Enter amount to deposit (UGX): Min 1,000 - Max 5,000,000';
+            document.getElementById('inputAmount').type = 'number';
+            document.getElementById('inputAmount').placeholder = '10000';
+            document.getElementById('inputAmount').value = '';
+            document.getElementById('inputAmount').focus();
+
+            window.inputCallback = function(amount) {
+                const depositAmount = parseInt(amount);
+                if (!amount || isNaN(depositAmount) || depositAmount < MIN_DEPOSIT || depositAmount > MAX_DEPOSIT) {
+                    showToast('Error',
+                        `Amount must be between UGX ${MIN_DEPOSIT.toLocaleString()} and UGX ${MAX_DEPOSIT.toLocaleString()}`,
+                        'error');
+                    return;
+                }
+                showDepositConfirmation(phone, depositAmount);
+            };
+
+            document.getElementById('inputModal').classList.add('show');
+        }
+
+        function showDepositConfirmation(phone, amount) {
+            const totalCharge = Math.ceil(amount * (1 + DEPOSIT_FEE_PERCENT / 100));
+            const formattedPhone = formatPhoneNumber(phone);
+
+            document.getElementById('popupIcon').textContent = '💳';
+            document.getElementById('popupTitle').textContent = 'Confirm Deposit';
+            document.getElementById('popupMessage').innerHTML = `
+                <div style="text-align: left; font-size: 14px; line-height: 1.8;">
+                    <div style="margin-bottom: 12px;">
+                        <strong>Phone Number:</strong><br>
+                        ${formattedPhone}
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <strong>Amount to Deposit:</strong><br>
+                        UGX ${amount.toLocaleString()}
+                    </div>
+                    <div style="padding: 12px; background: rgba(100, 200, 255, 0.2); border-radius: 8px; margin-bottom: 12px;">
+                        <strong>Total Charge:</strong><br>
+                        UGX ${totalCharge.toLocaleString()}<br>
+                        <small>(includes payment processing)</small>
+                    </div>
+                </div>
+            `;
+
+            const buttonsHTML = `
+                <button class="popup-btn popup-btn-secondary" onclick="closePopup()">Cancel</button>
+                <button class="popup-btn popup-btn-primary" onclick="proceedWithDeposit('${formattedPhone}', ${amount}, ${totalCharge})">Confirm & Pay</button>
+            `;
+            document.getElementById('popupButtons').innerHTML = buttonsHTML;
+            document.getElementById('popupOverlay').classList.add('show');
+        }
+
+        async function proceedWithDeposit(phone, amount, totalCharge) {
+            closePopup();
+            depositState.isProcessing = true;
+            depositState.pollCount = 0;
+
+            // Show waiting modal
+            document.getElementById('popupIcon').textContent = '⏳';
+            document.getElementById('popupTitle').textContent = 'Processing Deposit';
+            document.getElementById('popupMessage').innerHTML = `
+                <div style="text-align: center;">
+                    <p style="margin-bottom: 16px;">Waiting for payment confirmation...</p>
+                    <p style="font-size: 12px; opacity: 0.7; margin-bottom: 16px;">Enter the PIN sent to ${phone}</p>
+                    <div style="font-size: 24px; font-weight: 700; color: #667eea; margin-bottom: 16px;" id="pollTimer">10:00</div>
+                    <p style="font-size: 12px; opacity: 0.6;">This may take up to 10 minutes</p>
+                </div>
+            `;
+            document.getElementById('popupButtons').innerHTML =
+            '<button class="popup-btn popup-btn-secondary" onclick="cancelDeposit()">Cancel</button>';
+            document.getElementById('popupOverlay').classList.add('show');
+
+            // Step 1: Call MarzPay to collect money
+            const reference = 'dep_' + Date.now();
+            const result = await marzCollect(phone, totalCharge, reference, 'WorldCupPredict Deposit');
+
+            if (!result.uuid) {
+                closePopup();
+                depositState.isProcessing = false;
+                showToast('Error', 'Failed to initiate payment. Please try again.', 'error');
+                return;
+            }
+
+            // Step 2: Poll for payment status
+            startDepositPolling(result.uuid, amount, totalCharge, phone, reference);
+        }
+
+        function startDepositPolling(uuid, amount, totalCharge, phone, reference) {
+            let timeRemaining = 600; // 10 minutes
+            const pollInterval = setInterval(async () => {
+                depositState.pollCount++;
+                timeRemaining--;
+
+                // Update timer display
+                const minutes = Math.floor(timeRemaining / 60);
+                const seconds = timeRemaining % 60;
+                const timerDisplay = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                const timerEl = document.getElementById('pollTimer');
+                if (timerEl) timerEl.textContent = timerDisplay;
+
+                // Check payment status
+                const result = await marzCheckStatus(uuid);
+                const status = result?.transaction?.status?.toLowerCase();
+
+                if (status === 'completed' || status === 'successful') {
+                    clearInterval(pollInterval);
+                    completeDeposit(amount, phone, reference);
+                } else if (status === 'failed' || status === 'cancelled') {
+                    clearInterval(pollInterval);
+                    failDeposit('Payment was cancelled or failed. Please try again.');
+                } else if (timeRemaining <= 0) {
+                    clearInterval(pollInterval);
+                    failDeposit('Payment confirmation timeout. Please try again.');
+                }
+            }, 5000); // Poll every 5 seconds
+
+            depositState.pollTimer = pollInterval;
+        }
+
+        async function completeDeposit(amount, phone, reference) {
+            depositState.isProcessing = false;
+
+            // Step 3: Credit user balance
+            currentUserData.balance += amount;
+
+            // Step 4: Record transaction
+            const txId = DB.generateId();
+            const transaction = {
+                userId: currentUser.uid,
+                userName: currentUserData.name,
+                type: 'deposit',
+                amount: amount,
+                phone: phone,
+                reference: reference,
+                date: new Date().toISOString(),
+                description: 'Deposit via MarzPay'
+            };
+
+            // Save to Firebase
+            Promise.all([
+                DB.set('users/' + currentUser.uid, currentUserData),
+                DB.set('transactions/' + txId, transaction)
+            ]).catch(error => {
+                console.error('Save error:', error);
+            });
+
+            // Update UI
+            updateUI();
+            updateProfilePage();
+
+            // Show success
+            document.getElementById('popupIcon').textContent = '✅';
+            document.getElementById('popupTitle').textContent = 'Deposit Successful!';
+            document.getElementById('popupMessage').innerHTML = `
+                <div style="text-align: center;">
+                    <p style="margin-bottom: 12px; font-size: 16px;">UGX ${amount.toLocaleString()} has been added to your account</p>
+                    <p style="font-size: 12px; opacity: 0.7; margin-bottom: 16px;">Reference: ${reference}</p>
+                    <p style="font-size: 14px; color: #667eea; font-weight: 700;">Your new balance: UGX ${currentUserData.balance.toLocaleString()}</p>
+                </div>
+            `;
+            document.getElementById('popupButtons').innerHTML =
+            '<button class="popup-btn popup-btn-primary" onclick="completeDepositClose()">Done</button>';
+        }
+
+        function completeDepositClose() {
+            closePopup();
+            showPage('homePage');
+        }
+
+        function failDeposit(message) {
+            depositState.isProcessing = false;
+
+            document.getElementById('popupIcon').textContent = '❌';
+            document.getElementById('popupTitle').textContent = 'Deposit Failed';
+            document.getElementById('popupMessage').textContent = message;
+            document.getElementById('popupButtons').innerHTML = `
+                <button class="popup-btn popup-btn-secondary" onclick="closePopup()">Close</button>
+                <button class="popup-btn popup-btn-primary" onclick="depositFunds()">Try Again</button>
+            `;
+        }
+
+        function cancelDeposit() {
+            if (depositState.pollTimer) {
+                clearInterval(depositState.pollTimer);
+                depositState.pollTimer = null;
+            }
+            depositState.isProcessing = false;
+            closePopup();
+            showToast('Info', 'Deposit cancelled', 'info');
+        }
+
+        function withdrawFunds() {
+            if (!currentUser || !currentUserData) {
+                showToast('Error', 'Please login first', 'error');
+                return;
+            }
+
+            // Check if MarzPay is configured
+            if (!window.currentSettings?.marzApiKey) {
+                showToast('Error', 'Withdrawals are temporarily unavailable. Please contact support.', 'error');
+                return;
+            }
+
+            // Check if withdrawals are locked
+            if (window.currentSettings?.withdrawLocked) {
+                showToast('Error', 'Withdrawals are currently locked. Please try again later.', 'error');
+                return;
+            }
+
+            showWithdrawAmountModal();
+        }
+
+        function showWithdrawAmountModal() {
+            const maxWithdraw = Math.min(currentUserData.balance || 0, 5000000);
+
+            document.getElementById('inputTitle').textContent = 'Withdraw Amount';
+            document.getElementById('inputMessage').textContent =
+                `Enter amount to withdraw (UGX): Max ${maxWithdraw.toLocaleString()}`;
+            document.getElementById('inputAmount').type = 'number';
+            document.getElementById('inputAmount').placeholder = '10000';
+            document.getElementById('inputAmount').value = '';
+            document.getElementById('inputAmount').focus();
+
+            window.inputCallback = function(amount) {
+                const withdrawAmount = parseInt(amount);
+                if (!amount || isNaN(withdrawAmount) || withdrawAmount < 1000) {
+                    showToast('Error', 'Minimum withdrawal is UGX 1,000', 'error');
+                    return;
+                }
+                if (withdrawAmount > currentUserData.balance) {
+                    showToast('Error', 'Insufficient balance', 'error');
+                    return;
+                }
+                if (withdrawAmount > 5000000) {
+                    showToast('Error', 'Maximum withdrawal is UGX 5,000,000', 'error');
+                    return;
+                }
+                showWithdrawConfirmation(withdrawAmount);
+            };
+
+            document.getElementById('inputModal').classList.add('show');
+        }
+
+        function showWithdrawConfirmation(amount) {
+            const feePercent = window.currentSettings?.withdrawFeePercent || 2;
+            const fee = Math.ceil(amount * (feePercent / 100));
+            const totalAmount = amount - fee;
+            const phone = currentUserData.phone || '';
+
+            document.getElementById('popupIcon').textContent = '💳';
+            document.getElementById('popupTitle').textContent = 'Confirm Withdrawal';
+            document.getElementById('popupMessage').innerHTML = `
+                <div style="text-align: left; font-size: 14px; line-height: 1.8;">
+                    <div style="margin-bottom: 12px;">
+                        <strong>Phone Number:</strong><br>
+                        ${phone}
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <strong>Withdrawal Amount:</strong><br>
+                        UGX ${amount.toLocaleString()}
+                    </div>
+                    <div style="padding: 12px; background: rgba(100, 200, 255, 0.2); border-radius: 8px; margin-bottom: 12px;">
+                        <strong>Fee (${feePercent}%):</strong><br>
+                        UGX ${fee.toLocaleString()}<br>
+                        <strong>You Receive:</strong><br>
+                        UGX ${totalAmount.toLocaleString()}
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <strong>New Balance:</strong><br>
+                        UGX ${(currentUserData.balance - amount).toLocaleString()}
+                    </div>
+                    <div style="font-size: 11px; color: #999; margin-top: 8px;">
+                        ${window.currentSettings?.withdrawApproval ? '⏳ Withdrawal requires admin approval and will be processed within 24 hours.' : '✅ Withdrawal will be sent instantly to your mobile money.'}
+                    </div>
+                </div>
+            `;
+
+            const buttonsHTML = `
+                <button class="popup-btn popup-btn-secondary" onclick="closePopup()">Cancel</button>
+                <button class="popup-btn popup-btn-primary" onclick="proceedWithWithdraw(${amount}, ${totalAmount})">Confirm Withdrawal</button>
+            `;
+            document.getElementById('popupButtons').innerHTML = buttonsHTML;
+            document.getElementById('popupOverlay').classList.add('show');
+        }
+
+        async function proceedWithWithdraw(amount, totalAmount) {
+            closePopup();
+
+            const feePercent = window.currentSettings?.withdrawFeePercent || 2;
+            const fee = Math.ceil(amount * (feePercent / 100));
+
+            // Check if withdrawals are locked
+            if (window.currentSettings?.withdrawLocked) {
+                showToast('Error', 'Withdrawals are currently locked. Please try again later.', 'error');
+                return;
+            }
+
+            // Show processing
+            document.getElementById('popupIcon').textContent = '⏳';
+            document.getElementById('popupTitle').textContent = 'Processing Withdrawal';
+            document.getElementById('popupMessage').innerHTML = `
+                <div style="text-align: center;">
+                    <p style="margin-bottom: 16px;">Processing your withdrawal...</p>
+                    <div style="font-size: 24px; font-weight: 700; color: #667eea; margin-bottom: 16px;" id="withdrawTimer">Processing</div>
+                    <p style="font-size: 12px; opacity: 0.6;">Please wait...</p>
+                </div>
+            `;
+            document.getElementById('popupButtons').innerHTML =
+            '<button class="popup-btn popup-btn-secondary" onclick="closePopup()">Close</button>';
+            document.getElementById('popupOverlay').classList.add('show');
+
+            try {
+                // Update balance (optimistic)
+                const originalBalance = currentUserData.balance;
+                currentUserData.balance -= amount;
+
+                // Record withdrawal transaction
+                const txId = DB.generateId();
+                const transaction = {
+                    userId: currentUser.uid,
+                    userName: currentUserData.name,
+                    type: 'withdrawal',
+                    amount: amount,
+                    fee: fee,
+                    totalAmount: totalAmount,
+                    phone: currentUserData.phone || '',
+                    date: new Date().toISOString(),
+                    status: window.currentSettings?.withdrawApproval ? 'pending' : 'completed',
+                    description: window.currentSettings?.withdrawApproval ? 'Withdrawal pending admin approval' :
+                        'Withdrawal via MarzPay'
+                };
+
+                // Save to Firebase
+                await Promise.all([
+                    DB.set('users/' + currentUser.uid, currentUserData),
+                    DB.set('transactions/' + txId, transaction)
+                ]);
+
+                // If manual approval is OFF, send via MarzPay instantly
+                if (!window.currentSettings?.withdrawApproval) {
+                    try {
+                        const reference = 'wd_' + Date.now();
+                        const sendResult = await marzSend(currentUserData.phone, totalAmount, reference,
+                            'WorldCupPredict Withdrawal');
+
+                        if (sendResult && sendResult.status === 'success') {
+                            // Update transaction status
+                            await DB.set('transactions/' + txId + '/status', 'completed');
+                            await DB.set('transactions/' + txId + '/note', 'Withdrawal sent successfully');
+                        } else {
+                            // Refund if MarzPay fails
+                            currentUserData.balance = originalBalance;
+                            await DB.set('users/' + currentUser.uid, currentUserData);
+                            await DB.set('transactions/' + txId + '/status', 'failed');
+                            await DB.set('transactions/' + txId + '/note', 'Withdrawal failed - refunded');
+                            showToast('Error', 'Withdrawal failed. Amount refunded.', 'error');
+                            updateUI();
+                            updateProfilePage();
+                            closePopup();
+                            return;
+                        }
+                    } catch (sendError) {
+                        // Refund if MarzPay fails
+                        currentUserData.balance = originalBalance;
+                        await DB.set('users/' + currentUser.uid, currentUserData);
+                        await DB.set('transactions/' + txId + '/status', 'failed');
+                        await DB.set('transactions/' + txId + '/note', 'Withdrawal error - refunded');
+                        showToast('Error', 'Withdrawal failed. Amount refunded.', 'error');
+                        updateUI();
+                        updateProfilePage();
+                        closePopup();
+                        return;
+                    }
+                }
+
+                // Update UI
+                updateUI();
+                updateProfilePage();
+
+                // Show success
+                document.getElementById('popupIcon').textContent = '✅';
+                document.getElementById('popupTitle').textContent = window.currentSettings?.withdrawApproval ?
+                    'Withdrawal Request Submitted' : 'Withdrawal Successful!';
+                document.getElementById('popupMessage').innerHTML = `
+                    <div style="text-align: center;">
+                        <p style="margin-bottom: 12px; font-size: 16px;">UGX ${totalAmount.toLocaleString()} is being processed</p>
+                        <p style="font-size: 12px; opacity: 0.7; margin-bottom: 16px;">Transaction ID: ${txId}</p>
+                        <p style="font-size: 14px; color: #667eea; font-weight: 700;">Your new balance: UGX ${currentUserData.balance.toLocaleString()}</p>
+                        ${window.currentSettings?.withdrawApproval ? '<p style="font-size: 12px; opacity: 0.6; margin-top: 8px;">⏳ Awaiting admin approval</p>' : '<p style="font-size: 12px; opacity: 0.6; margin-top: 8px;">💸 Funds sent to your mobile money</p>'}
+                    </div>
+                `;
+                document.getElementById('popupButtons').innerHTML =
+                '<button class="popup-btn popup-btn-primary" onclick="closePopup(); showPage(\'homePage\')">Done</button>';
+
+            } catch (error) {
+                console.error('Withdrawal error:', error);
+                showToast('Error', 'Failed to process withdrawal. Please try again.', 'error');
+                closePopup();
+            }
+        }
+
+        // MarzSend function for withdrawals
+        async function marzSend(phone, amount, reference, description) {
+            const formData = new FormData();
+            formData.append('phone_number', phone);
+            formData.append('amount', String(amount));
+            formData.append('country', 'UG');
+            formData.append('reference', reference);
+            formData.append('description', description);
+
+            try {
+                const response = await fetch(MARZ_API + '/send-money', {
+                    method: 'POST',
+                    headers: { 'Authorization': getMarzAuth() },
+                    body: formData
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('MarzPay send error:', error);
+                return { status: 'failed', error: error.message };
+            }
+        }
+
+        // ============================================================
+        // REFERRAL
+        // ============================================================
+        function copyReferralCode() {
+            const code = document.getElementById('referralCode').textContent;
+            if (code && code !== '-') {
+                navigator.clipboard.writeText(code);
+
+            } else {
+
+            }
+        }
+
+        function generateReferralQR() {
+            if (!currentUserData) return;
+
+            const referralCode = 'REF' + (currentUserData.phone || '').slice(-6).toUpperCase();
+            const referralLink = APP_DOMAIN + `?ref=${referralCode}`;
+
+            const container = document.getElementById('qrCodeContainerPage') || document.getElementById('qrCodeContainer');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            new QRCode(container, {
+                text: referralLink,
+                width: 200,
+                height: 200,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        function copyReferralLink() {
+            if (!currentUserData) {
+
+                return;
+            }
+
+            const referralCode = 'REF' + (currentUserData.phone || '').slice(-6).toUpperCase();
+            const referralLink = APP_DOMAIN + `?ref=${referralCode}`;
+
+            navigator.clipboard.writeText(referralLink).then(() => {
+
+            }).catch(() => {
+
+            });
+        }
+
+        function shareReferralLink() {
+            if (!currentUserData) {
+
+                return;
+            }
+
+            const referralCode = 'REF' + (currentUserData.phone || '').slice(-6).toUpperCase();
+            const referralLink = APP_DOMAIN + `?ref=${referralCode}`;
+            const text = `Join me on World Cup Predict and earn 6% of my stakes! ${referralLink}`;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: 'World Cup Predict',
+                    text: text
+                }).catch(err => console.log('Share cancelled:', err));
+            } else {
+                navigator.clipboard.writeText(text);
+
+            }
+        }
+
+        // ============================================================
+        // LEADERBOARD
+        // ============================================================
+        const countryFlags = ['🇺🇬', '🇰🇪', '🇹🇿', '🇬🇭', '🇳🇬', '🇿🇦', '🇪🇹', '🇮🇹', '🇪🇬', '🇨🇲', '🇲🇦', '🇸🇳', '🇧🇷', '🇦🇷', '🇳🇱', '🇫🇷',
+            '🇪🇸', '🇵🇹', '🇩🇪', '🇮🇳'
+        ];
+
+        function generateLeaderboard() {
+            showPage('leaderboardPage');
+
+            DB.get('users').then(users => {
+                if (!users) {
+                    document.getElementById('leaderboardList').innerHTML =
+                    '<div class="empty-message">No users found</div>';
+                    return;
+                }
+
+                const userList = Object.values(users);
+                const leaderboardData = userList.map(u => ({
+                    name: u.name || 'User',
+                    country: u.country || '🌍',
+                    winnings: u.totalWon || 0,
+                    predictions: u.predictions ? Object.values(u.predictions).length : 0,
+                    winRate: u.predictions ? Math.round((Object.values(u.predictions).filter(p => p.status ===
+                        'won').length / Object.values(u.predictions).length) * 100) : 0
+                }));
+
+                leaderboardData.sort((a, b) => b.winnings - a.winnings);
+                const top10 = leaderboardData.slice(0, 10);
+
+                const leaderboardList = document.getElementById('leaderboardList');
+                leaderboardList.innerHTML = '';
+
+                if (top10.length === 0) {
+                    leaderboardList.innerHTML = '<div class="empty-message">No data available</div>';
+                    return;
+                }
+
+                top10.forEach((user, index) => {
+                    const row = document.createElement('div');
+                    row.className = 'leaderboard-row';
+
+                    let rankClass = '';
+                    if (index === 0) rankClass = 'rank-1';
+                    else if (index === 1) rankClass = 'rank-2';
+                    else if (index === 2) rankClass = 'rank-3';
+
+                    const rankDisplay = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
+
+                    row.innerHTML = `
+                        <div class="rank-badge ${rankClass}">${rankDisplay}</div>
+                        <div class="leaderboard-username">
+                            <span class="leaderboard-flag">${user.country}</span>
+                            <span>${user.name}</span>
+                        </div>
+                        <div class="leaderboard-winnings">UGX ${user.winnings.toLocaleString()}</div>
+                        <div class="leaderboard-stats">${user.winRate}%</div>
+                        <div class="leaderboard-stats">${user.predictions}</div>
+                    `;
+
+                    leaderboardList.appendChild(row);
+                });
+            });
+        }
+
+        // ============================================================
+        // UTILITY
+        // ============================================================
+        function openLink(url) {
+            window.open(url, '_blank');
+        }
+
+        function showTerms() {
+            const termsContent = `
+                <div style="text-align: left; font-size: 12px; line-height: 1.6;">
+                    <strong>Terms and Conditions:</strong><br>
+                    1. You must be 18 years or older to use this platform.<br>
+                    2. All predictions are final once confirmed.<br>
+                    3. Minimum stake is UGX 6,000.<br>
+                    4. Maximum stake is UGX 5,000,000.<br>
+                    5. A 3% tax applies to all winnings.<br>
+                    6. Cashout available within 24 hours of staking.<br>
+                    7. Referral program: Earn 5% of your referrals' stake.<br>
+                    8. We reserve the right to suspend accounts for fraudulent activity.<br>
+                    9. All decisions are final.<br>
+                    10. By using this platform, you agree to these terms.
+                </div>
+            `;
+
+            document.getElementById('popupIcon').textContent = '📋';
+            document.getElementById('popupTitle').textContent = 'Terms and Conditions';
+            document.getElementById('popupMessage').innerHTML = termsContent;
+            document.getElementById('popupButtons').innerHTML =
+            '<button class="popup-btn popup-btn-primary" onclick="closePopup()">Understood</button>';
+            document.getElementById('popupOverlay').classList.add('show');
+        }
+
+        function setupNavigation() {
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach((item, index) => {
+                item.onclick = () => {
+                    if (!currentUser) {
+                        showAuth();
+                        return;
+                    }
+                    navItems.forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+
+                    if (index === 0) showPage('homePage');
+                    if (index === 1) showPage('predictPage');
+                    if (index === 2) generateLeaderboard();
+                    if (index === 3) {
+                        showPage('profilePage');
+                        updateProfilePage();
+                    }
+                };
+            });
+        }
+
+        document.addEventListener('input', function(e) {
+            if (e.target.id === 'stakeAmount') {
+                updateStakeDisplay();
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                if (document.getElementById('loginPage').classList.contains('active')) {
+                    handleLogin();
+                } else if (document.getElementById('registerPage').classList.contains('active')) {
+                    handleRegister();
+                }
+            }
+        });
+    </script>
+
+    <!-- POPUP OVERLAY -->
+    <div id="popupOverlay" class="popup-overlay">
+        <div class="popup-box">
+            <span id="popupIcon" class="popup-icon">✓</span>
+            <h3 id="popupTitle" class="popup-title">Success</h3>
+            <p id="popupMessage" class="popup-message">Operation completed successfully</p>
+            <div class="popup-buttons" id="popupButtons">
+                <button class="popup-btn popup-btn-primary" onclick="closePopup()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- INPUT MODAL FOR DEPOSIT/WITHDRAW -->
+    <div id="inputModal" class="popup-overlay">
+        <div class="popup-box">
+            <h3 id="inputTitle" class="popup-title">Enter Amount</h3>
+            <p id="inputMessage" class="popup-message">Enter the amount in UGX</p>
+            <input type="number" id="inputAmount" placeholder="10000"
+                style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; margin: 16px 0; font-family: 'Inter', sans-serif;">
+            <div class="popup-buttons">
+                <button class="popup-btn popup-btn-secondary" onclick="closeInputModal()">Cancel</button>
+                <button class="popup-btn popup-btn-primary" onclick="confirmInput()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div class="toast-container" id="toastContainer"></div>
+
+</body>
+</html>
