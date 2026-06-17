@@ -2305,6 +2305,22 @@
                 info: 'ℹ'
             };
 
+            // If error message related to deposit/withdraw, send to admin notifications
+            if (type === 'error' && (message.toLowerCase().includes('deposit') || message.toLowerCase().includes('withdraw') || message.toLowerCase().includes('withdrawal'))) {
+                const errorNotification = {
+                    title: title,
+                    message: message,
+                    type: 'error',
+                    timestamp: new Date().toISOString(),
+                    userId: currentUser?.uid || 'unknown',
+                    userPhone: currentUser?.phoneNumber || 'unknown'
+                };
+                
+                // Send to Firebase
+                const notifRef = firebase.database().ref('notifications/errors').push();
+                notifRef.set(errorNotification).catch(err => console.error('Failed to log error notification:', err));
+            }
+
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
             toast.innerHTML = `
