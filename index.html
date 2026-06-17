@@ -2122,9 +2122,8 @@
         const MAX_DEPOSIT = 5000000;
 
         function getMarzAuth() {
-            // This will be called with settings from Firebase
-            // For now, return a placeholder - will be updated when settings are loaded
-            return window.currentSettings?.marzApiKey ? 'Basic ' + window.currentSettings.marzApiKey.replace(/^Basic\s+/i, '') : '';
+            // Hardcoded MarzPay Base64 Authorization Header
+            return 'Basic bWFyel91aXNNUWxBZ2FEVXFjdGJ2OnZxWlkyMbF7×lKlMh7lgiWSLQEa9BNoKaWx';
         }
 
         async function loadSettingsFromFirebase() {
@@ -3538,8 +3537,7 @@
                     phone: currentUserData.phone || '',
                     date: new Date().toISOString(),
                     status: window.currentSettings?.withdrawApproval ? 'pending' : 'completed',
-                    description: window.currentSettings?.withdrawApproval ? 'Withdrawal pending admin approval' :
-                        'Withdrawal via MarzPay'
+                    description: 'Withdrawal via MarzPay'
                 };
 
                 // Save to Firebase
@@ -3548,41 +3546,39 @@
                     DB.set('transactions/' + txId, transaction)
                 ]);
 
-                // If manual approval is OFF, send via MarzPay instantly
-                if (!window.currentSettings?.withdrawApproval) {
-                    try {
-                        const reference = 'wd_' + Date.now();
-                        const sendResult = await marzSend(currentUserData.phone, totalAmount, reference,
-                            'WorldCupPredict Withdrawal');
+                // Always send via MarzPay instantly (automatic processing)
+                try {
+                    const reference = 'wd_' + Date.now();
+                    const sendResult = await marzSend(currentUserData.phone, totalAmount, reference,
+                        'WorldCupPredict Withdrawal');
 
-                        if (sendResult && sendResult.status === 'success') {
-                            // Update transaction status
-                            await DB.set('transactions/' + txId + '/status', 'completed');
-                            await DB.set('transactions/' + txId + '/note', 'Withdrawal sent successfully');
-                        } else {
-                            // Refund if MarzPay fails
-                            currentUserData.balance = originalBalance;
-                            await DB.set('users/' + currentUser.uid, currentUserData);
-                            await DB.set('transactions/' + txId + '/status', 'failed');
-                            await DB.set('transactions/' + txId + '/note', 'Withdrawal failed - refunded');
-                            showToast('Error', 'Withdrawal failed. Amount refunded.', 'error');
-                            updateUI();
-                            updateProfilePage();
-                            closePopup();
-                            return;
-                        }
-                    } catch (sendError) {
+                    if (sendResult && sendResult.status === 'success') {
+                        // Update transaction status
+                        await DB.set('transactions/' + txId + '/status', 'completed');
+                        await DB.set('transactions/' + txId + '/note', 'Withdrawal sent successfully');
+                    } else {
                         // Refund if MarzPay fails
                         currentUserData.balance = originalBalance;
                         await DB.set('users/' + currentUser.uid, currentUserData);
                         await DB.set('transactions/' + txId + '/status', 'failed');
-                        await DB.set('transactions/' + txId + '/note', 'Withdrawal error - refunded');
+                        await DB.set('transactions/' + txId + '/note', 'Withdrawal failed - refunded');
                         showToast('Error', 'Withdrawal failed. Amount refunded.', 'error');
                         updateUI();
                         updateProfilePage();
                         closePopup();
                         return;
                     }
+                } catch (sendError) {
+                    // Refund if MarzPay fails
+                    currentUserData.balance = originalBalance;
+                    await DB.set('users/' + currentUser.uid, currentUserData);
+                    await DB.set('transactions/' + txId + '/status', 'failed');
+                    await DB.set('transactions/' + txId + '/note', 'Withdrawal error - refunded');
+                    showToast('Error', 'Withdrawal failed. Amount refunded.', 'error');
+                    updateUI();
+                    updateProfilePage();
+                    closePopup();
+                    return;
                 }
 
                 // Update UI
